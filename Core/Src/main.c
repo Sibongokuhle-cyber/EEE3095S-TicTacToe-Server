@@ -79,7 +79,6 @@ char turn = 'X';
 #define RX_RING_SIZE      128
 #define LINE_MAX_LEN      63    // payload chars per frame (terminator excluded)
 #define FRAME_TIMEOUT_MS  500   // an unterminated frame is discarded after this
-volatile uint8_t  rx_byte;
 volatile uint8_t  rx_ring[RX_RING_SIZE];
 volatile uint16_t rx_head = 0, rx_tail = 0;
 volatile uint8_t  rx_fault = 0; // set by ISR on ring overflow or UART error
@@ -105,6 +104,7 @@ void handle_move(const char *args);
 void process_command(char *cmd);
 void process_rx(void);
 void check_frame_timeout(void);
+void uart_rx_push(uint8_t b);
 void update_led(void);
 void check_button(void);
 /* USER CODE END PFP */
@@ -146,8 +146,11 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   // Arm reception FIRST so bytes sent while we boot are not lost.
+  // RX is handled by a tiny register-level ISR (USART1_IRQHandler in
+  // stm32f0xx_it.c -> uart_rx_push below). HAL's byte-at-a-time IT API is too
+  // slow at 8 MHz / 115200 baud and overruns on back-to-back bytes.
   game_state = STATE_IDLE;
-  HAL_UART_Receive_IT(&huart1, (uint8_t *)&rx_byte, 1);
+  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
 
   // --- Boot indicator: flash LED 3 times ---
   for (int i = 0; i < 3; i++) {
@@ -476,27 +479,16 @@ void check_frame_timeout(void) {
     }
 }
 
-/* ============================ UART callbacks ============================== */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-    if (huart->Instance == USART1) {
-        uint16_t next = (uint16_t)((rx_head + 1) % RX_RING_SIZE);
-        if (next == rx_tail) {
-            rx_fault = 1;                 // ring full: drop byte, poison frame
-        } else {
-            rx_ring[rx_head] = rx_byte;
-            rx_head = next;
-        }
-        HAL_UART_Receive_IT(huart, (uint8_t *)&rx_byte, 1);
-    }
-}
-
-/* Overrun / framing / noise: HAL aborts reception on overrun, which would
- * leave RX dead. Flag the frame as corrupt and re-arm.                       */
-void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
-    if (huart->Instance == USART1) {
-        rx_fault = 1;
-        huart->ErrorCode = HAL_UART_ERROR_NONE;
-        HAL_UART_Receive_IT(huart, (uint8_t *)&rx_byte, 1);   // BUSY is harmless
+/* ============================ UART receive ================================ *
+ * Called from USART1_IRQHandler (stm32f0xx_it.c) for every received byte.
+ * Keep it short: it runs at interrupt level.                                 */
+void uart_rx_push(uint8_t b) {
+    uint16_t next = (uint16_t)((rx_head + 1) % RX_RING_SIZE);
+    if (next == rx_tail) {
+        rx_fault = 1;                 // ring full: drop byte, poison frame
+    } else {
+        rx_ring[rx_head] = b;
+        rx_head = next;
     }
 }
 

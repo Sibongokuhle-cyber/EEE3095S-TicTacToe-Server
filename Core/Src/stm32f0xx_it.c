@@ -141,9 +141,20 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /* USER CODE BEGIN 1 */
-extern UART_HandleTypeDef huart1;
+extern void uart_rx_push(uint8_t b);   /* main.c */
+extern volatile uint8_t rx_fault;      /* main.c */
 
+/* Register-level RX handler (a few dozen cycles). Replaces
+ * HAL_UART_IRQHandler, which is too slow for back-to-back bytes at
+ * 115200 baud / 8 MHz and caused overruns. */
 void USART1_IRQHandler(void) {
-    HAL_UART_IRQHandler(&huart1);
+    uint32_t isr = USART1->ISR;
+    if (isr & (USART_ISR_ORE | USART_ISR_FE | USART_ISR_NE)) {
+        USART1->ICR = USART_ICR_ORECF | USART_ICR_FECF | USART_ICR_NCF;
+        rx_fault = 1;                  /* frame is corrupt: framer rejects it */
+    }
+    if (isr & USART_ISR_RXNE) {
+        uart_rx_push((uint8_t)USART1->RDR);   /* reading RDR clears RXNE */
+    }
 }
 /* USER CODE END 1 */
