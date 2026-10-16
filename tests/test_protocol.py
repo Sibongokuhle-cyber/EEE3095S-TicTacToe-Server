@@ -1,63 +1,113 @@
+import pytest
 from conftest import send_cmd, read_line
+
+
+# ---------------------------------------------------------------- helpers
+
+def _connect(ser):
+    send_cmd(ser, "CONNECT")
+    assert read_line(ser, "OK") == "OK"
+
+
+def _new_game(ser):
+    send_cmd(ser, "NEW")
+    line = read_line(ser, "OK: BOARD: .........")
+    assert line == "OK: BOARD: .........", line
+
+
+# ------------------------------------------------------------------ tests
 
 def test_connect(ser):
     send_cmd(ser, "CONNECT")
-    assert read_line(ser) == "OK"
+    assert read_line(ser, "OK") == "OK"
+
 
 def test_new(ser):
-    send_cmd(ser, "CONNECT")
-    assert read_line(ser) == "OK"
-    send_cmd(ser, "NEW")
-    assert read_line(ser) == "OK: BOARD: ........."
+    _connect(ser)
+    _new_game(ser)
+
 
 def test_legal_move(ser):
-    send_cmd(ser, "NEW")
-    assert read_line(ser) == "OK: BOARD: ........."
+    _connect(ser)
+    _new_game(ser)
     send_cmd(ser, "MOVE:0")
     assert read_line(ser) == "OK: BOARD: X........"
 
+
 def test_occupied(ser):
-    send_cmd(ser, "NEW")
-    read_line(ser)
+    _connect(ser)
+    _new_game(ser)
+
     send_cmd(ser, "MOVE:0")
-    read_line(ser)
+    assert read_line(ser) == "OK: BOARD: X........"
+
     send_cmd(ser, "MOVE:0")
     assert read_line(ser) == "NACK: OCCUPIED"
+
     send_cmd(ser, "STATE")
     assert read_line(ser) == "BOARD: X........"
 
+
 def test_range(ser):
-    send_cmd(ser, "NEW")
-    read_line(ser)
+    _connect(ser)
+    _new_game(ser)
+
     send_cmd(ser, "MOVE:9")
     assert read_line(ser) == "NACK: RANGE"
 
-def test_after_game_over(ser):
-    send_cmd(ser, "NEW")
-    read_line(ser)
-    for cmd in ["MOVE:0", "MOVE:3", "MOVE:1", "MOVE:4", "MOVE:2"]:
-        send_cmd(ser, cmd)
-        read_line(ser)
-    send_cmd(ser, "MOVE:5")
-    assert read_line(ser) in ("NACK: NOGAME", "NACK: BADCMD")
 
-def test_win(ser):
-    send_cmd(ser, "NEW")
-    read_line(ser)
-    seq = ["MOVE:0", "MOVE:3", "MOVE:1", "MOVE:4", "MOVE:2"]
-    for cmd in seq[:-1]:
+def test_after_game_over(ser):
+    _connect(ser)
+    _new_game(ser)
+
+    # X wins: 0,1,2
+    for cmd in ["MOVE:0", "MOVE:3", "MOVE:1", "MOVE:4"]:
         send_cmd(ser, cmd)
         read_line(ser)
-    send_cmd(ser, seq[-1])
+    send_cmd(ser, "MOVE:2")
     assert read_line(ser) == "WIN: X"
 
-def test_draw(ser):
-    send_cmd(ser, "NEW")
-    read_line(ser)
-    seq = ["MOVE:0", "MOVE:1", "MOVE:2", "MOVE:4",
-           "MOVE:3", "MOVE:5", "MOVE:7", "MOVE:6", "MOVE:8"]
-    for cmd in seq[:-1]:
+    send_cmd(ser, "MOVE:5")
+    # Pin this to whatever the firmware actually returns; change if it
+    # answers NACK: BADCMD instead.
+    assert read_line(ser) == "NACK: NOGAME"
+
+
+def test_win(ser):
+    _connect(ser)
+    _new_game(ser)
+
+    expected = [
+        ("MOVE:0", "OK: BOARD: X........"),
+        ("MOVE:3", "OK: BOARD: X..O....."),
+        ("MOVE:1", "OK: BOARD: XX.O....."),
+        ("MOVE:4", "OK: BOARD: XX.OO...."),
+    ]
+    for cmd, reply in expected:
         send_cmd(ser, cmd)
-        read_line(ser)
-    send_cmd(ser, seq[-1])
+        assert read_line(ser) == reply
+
+    send_cmd(ser, "MOVE:2")
+    assert read_line(ser) == "WIN: X"
+
+
+def test_draw(ser):
+    _connect(ser)
+    _new_game(ser)
+
+    expected = [
+        ("MOVE:0", "OK: BOARD: X........"),
+        ("MOVE:1", "OK: BOARD: XO......."),
+        ("MOVE:2", "OK: BOARD: XOX......"),
+        ("MOVE:4", "OK: BOARD: XOX.O...."),
+        ("MOVE:3", "OK: BOARD: XOXOO...."),
+        ("MOVE:5", "OK: BOARD: XOXOOX..."),
+        ("MOVE:7", "OK: BOARD: XOXOOX.O."),
+        ("MOVE:6", "OK: BOARD: XOXOOXO.."),
+    ]
+    for cmd, reply in expected:
+        send_cmd(ser, cmd)
+        assert read_line(ser) == reply
+
+    send_cmd(ser, "MOVE:8")
     assert read_line(ser) == "DRAW"
