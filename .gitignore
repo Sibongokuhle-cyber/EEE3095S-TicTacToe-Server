@@ -1,0 +1,29 @@
+# Build folders
+Debug/
+Release/
+build/
+
+# Object files
+*.o
+*.d
+*.elf
+*.map
+*.list
+*.su
+*.cyclo
+
+# IDE settings
+.settings/
+.cproject
+.project
+.mxproject
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+env/
