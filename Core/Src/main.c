@@ -45,21 +45,26 @@
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-// LED and Button pins (change these if your board uses different pins)
-#define LED_GPIO_PORT GPIOA
-#define LED_PIN GPIO_PIN_5
-#define LED_ON GPIO_PIN_RESET  // Inverted logic based on your note!
-#define LED_OFF GPIO_PIN_SET
-#define BUTTON_GPIO_PORT GPIOC
-#define BUTTON_PIN GPIO_PIN_13
+// LED: R/G dual-colour LED on PB10 (RED) and PB11 (GREEN)
+// These are active-HIGH: pin HIGH = LED ON
+#define LED_R_PORT  GPIOB
+#define LED_R_PIN   GPIO_PIN_10
+#define LED_G_PORT  GPIOB
+#define LED_G_PIN   GPIO_PIN_11
+#define LED_ON      GPIO_PIN_SET
+#define LED_OFF     GPIO_PIN_RESET
 
-// Game state variables
+// Button: SW0 on PA0, pressed = LOW (needs internal pull-up)
+#define BUTTON_PORT GPIOA
+#define BUTTON_PIN  GPIO_PIN_0
+
+// Game state
 typedef enum { STATE_IDLE, STATE_IN_PROGRESS, STATE_GAME_OVER } GameState;
 GameState game_state = STATE_IDLE;
 char board[9];
 char turn = 'X';
 
-// UART Ring Buffer
+// UART ring buffer
 #define RX_RING_SIZE 128
 volatile uint8_t rx_byte;
 uint8_t rx_ring[RX_RING_SIZE];
@@ -243,25 +248,24 @@ static void MX_GPIO_Init(void)
   /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10|GPIO_PIN_11, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PC13 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  /*Configure GPIO pin : PA0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_5;
+  /*Configure GPIO pins : PB10 PB11 */
+  GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -397,16 +401,27 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 void update_led(void) {
     static uint32_t last = 0;
-    static uint8_t led = 0;
+    static uint8_t blink = 0;
+
     if (game_state == STATE_IDLE) {
-        HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, LED_OFF);
-    } else if (game_state == STATE_IN_PROGRESS) {
-        HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, (turn == 'X') ? LED_ON : LED_OFF);
-    } else if (game_state == STATE_GAME_OVER) {
-        if (HAL_GetTick() - last > 100) {
+        HAL_GPIO_WritePin(LED_R_PORT, LED_R_PIN, LED_OFF);
+        HAL_GPIO_WritePin(LED_G_PORT, LED_G_PIN, LED_OFF);
+    }
+    else if (game_state == STATE_IN_PROGRESS) {
+        if (turn == 'X') {
+            HAL_GPIO_WritePin(LED_R_PORT, LED_R_PIN, LED_ON);   // RED = X's turn
+            HAL_GPIO_WritePin(LED_G_PORT, LED_G_PIN, LED_OFF);
+        } else {
+            HAL_GPIO_WritePin(LED_R_PORT, LED_R_PIN, LED_OFF);
+            HAL_GPIO_WritePin(LED_G_PORT, LED_G_PIN, LED_ON);   // GREEN = O's turn
+        }
+    }
+    else if (game_state == STATE_GAME_OVER) {
+        if (HAL_GetTick() - last > 150) {
             last = HAL_GetTick();
-            led = !led;
-            HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, led ? LED_ON : LED_OFF);
+            blink = !blink;
+            HAL_GPIO_WritePin(LED_R_PORT, LED_R_PIN, blink ? LED_ON : LED_OFF);
+            HAL_GPIO_WritePin(LED_G_PORT, LED_G_PIN, blink ? LED_ON : LED_OFF);
         }
     }
 }
