@@ -1,16 +1,21 @@
 import serial
 import time
+import sys
 
-# CHANGE THIS to your actual COM port
-PORT = "COM14"
+PORT = "COM14"  # <-- CHANGE if different
 
 try:
-    s = serial.Serial(PORT, 115200, timeout=2)
+    s = serial.Serial(PORT, 115200, timeout=5)
     print(f"Opened {PORT}")
-    time.sleep(1)  # Wait for boot message
-    data = s.read_all()
-    print("Boot message:")
-    print(data.decode(errors='ignore'))
+    print(">>> PRESS THE RESET BUTTON ON THE STM32 NOW <<<")
+    print("Watching for 15 seconds...\n")
+
+    start = time.time()
+    while time.time() - start < 15:
+        line = s.readline().decode(errors='ignore').strip()
+        if line:
+            print(f"[{time.time()-start:5.1f}s] {line}")
     s.close()
 except Exception as e:
     print(f"ERROR: {e}")
+    sys.exit(1)

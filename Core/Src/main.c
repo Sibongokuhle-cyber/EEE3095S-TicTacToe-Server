@@ -128,9 +128,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
   // --- Boot indicator: flash LED 3 times ---
   for (int i = 0; i < 3; i++) {
-      HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, LED_ON);
+      HAL_GPIO_WritePin(LED_R_PORT, LED_R_PIN, LED_ON);
+      HAL_GPIO_WritePin(LED_G_PORT, LED_G_PIN, LED_ON);
       HAL_Delay(150);
-      HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, LED_OFF);
+      HAL_GPIO_WritePin(LED_R_PORT, LED_R_PIN, LED_OFF);
+      HAL_GPIO_WritePin(LED_G_PORT, LED_G_PIN, LED_OFF);
       HAL_Delay(150);
   }
 
@@ -216,7 +218,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 38400;
+  huart1.Init.BaudRate = 115200;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -395,7 +397,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == USART1) {
         rx_ring[rx_head] = rx_byte;
         rx_head = (rx_head + 1) % RX_RING_SIZE;
-        HAL_UART_Receive_IT(&huart1, &rx_byte, 1);
+        HAL_UART_Receive_IT(&huart1, (uint8_t *)&rx_byte, 1);
     }
 }
 
@@ -428,10 +430,10 @@ void update_led(void) {
 
 void check_button(void) {
     static uint8_t last = 1;
-    uint8_t cur = HAL_GPIO_ReadPin(BUTTON_GPIO_PORT, BUTTON_PIN);
+    uint8_t cur = HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN);
     if (last == 1 && cur == 0) {
         HAL_Delay(20); // Debounce
-        if (HAL_GPIO_ReadPin(BUTTON_GPIO_PORT, BUTTON_PIN) == 0) {
+        if (HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN) == 0) {
             game_new();   // Local reset/new game
         }
     }
