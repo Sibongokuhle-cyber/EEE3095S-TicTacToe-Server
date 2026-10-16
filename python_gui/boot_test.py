@@ -1,21 +1,21 @@
-import serial
-import time
+"""Quick link check: prints whatever the board sends, then pings it.
+
+    python boot_test.py COM14        (or /dev/ttyACM0)
+"""
 import sys
+import time
 
-PORT = "COM14"  # <-- CHANGE if different
+import serial
 
-try:
-    s = serial.Serial(PORT, 115200, timeout=5)
-    print(f"Opened {PORT}")
-    print(">>> PRESS THE RESET BUTTON ON THE STM32 NOW <<<")
-    print("Watching for 15 seconds...\n")
-
-    start = time.time()
-    while time.time() - start < 15:
-        line = s.readline().decode(errors='ignore').strip()
+port = sys.argv[1] if len(sys.argv) > 1 else "COM14"
+with serial.Serial(port, 115200, timeout=0.3) as s:
+    print(f"Opened {port}. Press the RESET button now if you want to see the boot banner.")
+    t_end = time.time() + 10
+    last_ping = 0
+    while time.time() < t_end:
+        if time.time() - last_ping > 1.0:
+            s.write(b"CONNECT\n")
+            last_ping = time.time()
+        line = s.readline().decode(errors="replace").strip()
         if line:
-            print(f"[{time.time()-start:5.1f}s] {line}")
-    s.close()
-except Exception as e:
-    print(f"ERROR: {e}")
-    sys.exit(1)
+            print(f"[{10 - (t_end - time.time()):4.1f}s] {line}")

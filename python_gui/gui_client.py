@@ -1,9 +1,24 @@
+"""Tic-Tac-Toe serial client (Tkinter + pyserial).
+
+Thin client: the STM32 owns all game state and rules. The board is redrawn ONLY
+from server replies (OK:BOARD:..., BOARD:...). After a WIN/DRAW the client asks
+the server for STATE instead of guessing the final mark.
+
+    pip install pyserial
+    python gui_client.py
+"""
+import queue
+import threading
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import messagebox, ttk
+
 import serial
 import serial.tools.list_ports
-import threading
-import queue
+
+BAUD = 115200
+HANDSHAKE_PERIOD_MS = 600
+HANDSHAKE_TRIES = 15           # ~9 s, covers MCU boot / reset on port open
+REPLY_TIMEOUT_MS = 2000
 
 
 class TicTacToeClient:
@@ -12,29 +27,31 @@ class TicTacToeClient:
         self.root.title("Tic-Tac-Toe Serial Client")
         self.ser = None
         self.rx_queue = queue.Queue()
-        self.game_over = True          # nothing playable until a game starts
-        self.board = ['.'] * 9
-        self.last_move = None          # index of the last MOVE we sent
+        self.connected = False        # server answered OK to CONNECT
+        self.game_over = True         # nothing playable until the server confirms NEW
+        self.busy = False             # one request in flight at a time
+        self.busy_after = None
+        self.handshake_tries = 0
+        self.result_text = None       # "Winner: X" / "Draw", shown once STATE arrives
+        self.board = ["."] * 9
 
         self._build_ui()
         self._refresh_ports()
-        self._disable_board()
+        self._set_controls()
         self.root.after(50, self._poll_queue)
+        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
     # ------------------------------------------------------------------ UI
-
     def _build_ui(self):
         top = ttk.Frame(self.root, padding=5)
         top.pack(fill=tk.X)
-
         ttk.Label(top, text="Port:").pack(side=tk.LEFT)
-        self.port_cb = ttk.Combobox(top, width=12, state="readonly")
+        self.port_cb = ttk.Combobox(top, width=14, state="readonly")
         self.port_cb.pack(side=tk.LEFT, padx=5)
         ttk.Button(top, text="Refresh", command=self._refresh_ports).pack(side=tk.LEFT)
         self.connect_btn = ttk.Button(top, text="Connect", command=self._connect)
         self.connect_btn.pack(side=tk.LEFT, padx=5)
-        self.disconnect_btn = ttk.Button(top, text="Disconnect",
-                                         command=self._disconnect, state=tk.DISABLED)
+        self.disconnect_btn = ttk.Button(top, text="Disconnect", command=self._disconnect)
         self.disconnect_btn.pack(side=tk.LEFT)
 
         self.status = tk.StringVar(value="Disconnected")
@@ -45,22 +62,32 @@ class TicTacToeClient:
         board_frame.pack()
         self.buttons = []
         for i in range(9):
-            b = tk.Button(board_frame, text="", font=("Arial", 24),
-                          width=3, height=1,
+            b = tk.Button(board_frame, text="", font=("Arial", 24), width=3, height=1,
                           command=lambda idx=i: self._send_move(idx))
             b.grid(row=i // 3, column=i % 3, padx=2, pady=2)
             self.buttons.append(b)
 
         ctrl = ttk.Frame(self.root, padding=5)
         ctrl.pack()
-        ttk.Button(ctrl, text="New Game", command=self._new_game).pack(side=tk.LEFT, padx=5)
-        ttk.Button(ctrl, text="Resign", command=self._resign).pack(side=tk.LEFT, padx=5)
+        self.new_btn = ttk.Button(ctrl, text="New Game", command=self._new_game)
+        self.new_btn.pack(side=tk.LEFT, padx=5)
+        self.resign_btn = ttk.Button(ctrl, text="Resign", command=self._resign)
+        self.resign_btn.pack(side=tk.LEFT, padx=5)
 
-    # ------------------------------------------------------------- serial
+    def _set_controls(self):
+        """Single place that decides what is clickable."""
+        playable = self.connected and not self.game_over
+        for b in self.buttons:
+            b.config(state=tk.NORMAL if playable else tk.DISABLED)
+        self.connect_btn.config(state=tk.DISABLED if self.ser else tk.NORMAL)
+        self.disconnect_btn.config(state=tk.NORMAL if self.ser else tk.DISABLED)
+        self.new_btn.config(state=tk.NORMAL if self.connected else tk.DISABLED)
+        self.resign_btn.config(state=tk.NORMAL if playable else tk.DISABLED)
 
+    # -------------------------------------------------------------- serial
     def _refresh_ports(self):
         ports = [p.device for p in serial.tools.list_ports.comports()]
-        self.port_cb['values'] = ports
+        self.port_cb["values"] = ports
         if ports and not self.port_cb.get():
             self.port_cb.current(0)
 
@@ -70,120 +97,152 @@ class TicTacToeClient:
             messagebox.showerror("Error", "No serial port selected")
             return
         try:
-            self.ser = serial.Serial(port, 115200, timeout=1)
+            s = serial.Serial()
+            s.port, s.baudrate, s.timeout = port, BAUD, 0.2
+            s.dtr = False             # do not pulse reset when the port opens (if supported)
+            s.rts = False
+            s.open()
         except Exception as e:
             messagebox.showerror("Serial error", str(e))
             return
 
-        self.status.set(f"Connected to {port}")
-        self.connect_btn.config(state=tk.DISABLED)
-        self.disconnect_btn.config(state=tk.NORMAL)
+        self.ser = s
+        self.connected = False
+        self.game_over = True
+        self.handshake_tries = 0
+        self.status.set(f"Connecting to {port} ...")
+        self._set_controls()
+        threading.Thread(target=self._read_thread, args=(s,), daemon=True).start()
+        self._handshake()
 
-        # Capture the port locally: if self.ser is reassigned by a later
-        # Connect, the old reader thread must not start reading the new port.
-        ser = self.ser
-        threading.Thread(target=self._read_thread, args=(ser,), daemon=True).start()
+    def _handshake(self):
+        """Resend CONNECT until the server answers OK (it may still be booting)."""
+        if not self.ser or self.connected:
+            return
+        if self.handshake_tries >= HANDSHAKE_TRIES:
+            self.status.set("No reply from board - check port, power and firmware")
+            self._close_port()
+            return
+        self.handshake_tries += 1
         self._send("CONNECT")
+        self.root.after(HANDSHAKE_PERIOD_MS, self._handshake)
 
     def _disconnect(self):
-        ser, self.ser = self.ser, None      # detach first so the reader exits
+        if self.ser:
+            self._send("DISCONNECT")
+        self._close_port()
+        self.status.set("Disconnected")
+
+    def _close_port(self):
+        ser, self.ser = self.ser, None      # detach first so the reader thread exits
         if ser:
             try:
-                ser.write(b"DISCONNECT\n")
                 ser.flush()
                 ser.close()
             except Exception:
                 pass
-        self.status.set("Disconnected")
-        self.connect_btn.config(state=tk.NORMAL)
-        self.disconnect_btn.config(state=tk.DISABLED)
+        self.connected = False
         self.game_over = True
-        self.last_move = None
-        self._disable_board()
+        self.busy = False
+        self.result_text = None
+        self._set_controls()
+
+    def _on_close(self):
+        self._disconnect()
+        self.root.destroy()
 
     def _read_thread(self, ser):
-        while ser.is_open:
+        while True:
             try:
-                line = ser.readline().decode(errors='ignore').strip()
+                if not ser.is_open:
+                    break
+                line = ser.readline().decode(errors="replace").strip()
             except Exception:
                 break
             if line:
                 self.rx_queue.put(line)
 
-    # ---------------------------------------------------------- protocol
-
+    # ------------------------------------------------------------ protocol
     def _poll_queue(self):
         while not self.rx_queue.empty():
             self._handle_line(self.rx_queue.get())
         self.root.after(50, self._poll_queue)
 
     def _handle_line(self, line):
-        if line.startswith("OK: BOARD: "):
-            # "OK: BOARD: " is 11 characters, not 10.
-            self._set_board(line[11:])
+        # Drop replies that arrive after we closed the port.
+        if not self.ser:
+            return
+
+        if line == "OK":
+            if not self.connected:
+                self.connected = True
+                self.status.set("Connected - press New Game")
+            self._request_done()
+
+        elif line.startswith("OK:BOARD:"):            # NEW, accepted MOVE, or button-initiated new game
+            self._set_board(line[len("OK:BOARD:"):])
             self.game_over = False
-            self._enable_board()
-        elif line.startswith("BOARD: "):
-            self._set_board(line[7:])
-        elif line.startswith("WIN: "):
-            # The server sends only "WIN: X" -- the winning mark is not
-            # reflected in self.board yet, so patch it in locally.
-            self._apply_pending_move()
-            self.status.set(f"Winner: {line[5:]}")
+            self.result_text = None
+            self.status.set("Game in progress")
+            self._request_done()
+
+        elif line.startswith("BOARD:"):               # reply to STATE
+            self._set_board(line[len("BOARD:"):])
+            if self.result_text:
+                self.status.set(self.result_text)
+            self._request_done()
+
+        elif line.startswith("WIN:"):
             self.game_over = True
-            self._disable_board()
+            self.result_text = f"Winner: {line[4:]}"
+            self.status.set(self.result_text)
+            self._request_done()
+            self._request("STATE")                    # get the authoritative final board
+
         elif line == "DRAW":
-            self._apply_pending_move()
-            self.status.set("Draw")
             self.game_over = True
-            self._disable_board()
-        elif line.startswith("NACK: "):
-            self.last_move = None
-            messagebox.showwarning("Rejected", line)
-            if line in ("NACK: NOGAME", "NACK: BADCMD"):
-                self.game_over = True
-                self._disable_board()
-        elif line == "OK":
-            self.status.set("OK")
-        else:
+            self.result_text = "Draw"
+            self.status.set(self.result_text)
+            self._request_done()
+            self._request("STATE")
+
+        elif line == "OK:GAMEOVER":
+            self.game_over = True
+            self.status.set("You resigned - game over")
+            self._request_done()
+
+        elif line.startswith("NACK:"):
+            reason = line[5:]
+            self._request_done()
+            if reason == "NOGAME":
+                self.game_over = True                 # server says there is no live game
+            messagebox.showwarning("Rejected by server", self._explain(reason))
+
+        else:                                         # boot banner etc.
             self.status.set(line)
+        self._set_controls()
+
+    @staticmethod
+    def _explain(reason):
+        return {
+            "OCCUPIED": "That cell is already taken.",
+            "RANGE": "Cell index out of range.",
+            "NOTURN": "It is not that player's turn.",
+            "NOGAME": "There is no game in progress. Press New Game.",
+            "BADCMD": "The server did not accept that command in its current state.",
+            "NOCONN": "Not connected. Press Connect.",
+            "TOOLONG": "Message too long.",
+            "TIMEOUT": "Message incomplete (timed out).",
+        }.get(reason, reason)
 
     def _set_board(self, board_str):
-        if isinstance(board_str, (list, tuple)):
-            board_str = "".join(board_str)
-        if len(board_str) != 9:
-            return
+        if len(board_str) != 9 or any(c not in ".XO" for c in board_str):
+            return                                    # not a valid board: ignore, never guess
         self.board = list(board_str)
         for i, ch in enumerate(self.board):
-            self.buttons[i].config(text="" if ch == '.' else ch)
+            self.buttons[i].config(text="" if ch == "." else ch)
 
-    def _apply_pending_move(self):
-        """WIN/DRAW replies carry no board; fill the last move ourselves.
-
-        The server alternates X and O starting with X, so the mark of the
-        Nth move is X when N is odd, O when N is even.
-        """
-        idx = self.last_move
-        self.last_move = None
-        if idx is None or not (0 <= idx < 9):
-            return
-        if self.board[idx] != '.':
-            return
-        filled = sum(1 for c in self.board if c != '.')
-        mark = 'X' if filled % 2 == 0 else 'O'
-        self.board[idx] = mark
-        self.buttons[idx].config(text=mark)
-
-    def _disable_board(self):
-        for b in self.buttons:
-            b.config(state=tk.DISABLED)
-
-    def _enable_board(self):
-        for b in self.buttons:
-            b.config(state=tk.NORMAL)
-
-    # --------------------------------------------------------- outbound
-
+    # ------------------------------------------------------------ outbound
     def _send(self, cmd):
         if self.ser and self.ser.is_open:
             try:
@@ -192,27 +251,40 @@ class TicTacToeClient:
             except Exception as e:
                 self.status.set(f"Write error: {e}")
 
+    def _request(self, cmd):
+        """Send one request; ignore further clicks until the reply (or a timeout)."""
+        if self.busy:
+            return
+        self.busy = True
+        if self.busy_after:
+            self.root.after_cancel(self.busy_after)
+        self.busy_after = self.root.after(REPLY_TIMEOUT_MS, self._request_timeout)
+        self._send(cmd)
+
+    def _request_done(self):
+        self.busy = False
+        if self.busy_after:
+            self.root.after_cancel(self.busy_after)
+            self.busy_after = None
+
+    def _request_timeout(self):
+        self.busy = False
+        self.busy_after = None
+        self.status.set("No reply from board")
+
     def _send_move(self, idx):
         if self.game_over:
             return
-        self.last_move = idx
-        self._send(f"MOVE:{idx}")
+        self._request(f"MOVE:{idx}")      # legality is decided by the server only
 
     def _new_game(self):
-        self.game_over = True           # ignored until the server confirms
-        self.last_move = None
-        self._send("NEW")
-        self.status.set("New game")
+        self._request("NEW")
 
     def _resign(self):
-        self._send("RESIGN")
-        self.game_over = True
-        self.last_move = None
-        self._disable_board()
-        self.status.set("Resigned")
+        self._request("RESIGN")           # UI changes only when the server confirms
 
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = TicTacToeClient(root)
+    TicTacToeClient(root)
     root.mainloop()

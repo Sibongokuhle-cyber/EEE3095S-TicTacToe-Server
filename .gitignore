@@ -1,9 +1,7 @@
-# Build folders
+# Build output
 Debug/
 Release/
 build/
-
-# Object files
 *.o
 *.d
 *.elf
@@ -12,11 +10,8 @@ build/
 *.su
 *.cyclo
 
-# IDE settings
-.settings/
-.cproject
-.project
-.mxproject
+# NOTE: .project, .cproject, .mxproject and .settings/ are intentionally NOT
+# ignored - they are needed to import the project into STM32CubeIDE.
 
 # OS files
 .DS_Store
@@ -25,5 +20,6 @@ Thumbs.db
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
 .venv/
 env/
