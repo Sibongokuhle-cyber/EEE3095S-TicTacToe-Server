@@ -121,8 +121,22 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  // --- Boot indicator: flash LED 3 times ---
+  for (int i = 0; i < 3; i++) {
+      HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, LED_ON);
+      HAL_Delay(150);
+      HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, LED_OFF);
+      HAL_Delay(150);
+  }
+
+  // --- Boot message over UART ---
+  HAL_Delay(100);  // Give ST-Link a moment to be ready
+  send_str("\r\n=== Tic-Tac-Toe Server Ready ===\r\n");
+  send_str("Waiting for CONNECT...\r\n");
+
+  // --- Start the game state and UART interrupt ---
   game_state = STATE_IDLE;
-  HAL_UART_Receive_IT(&huart1, &rx_byte, 1);
+  HAL_UART_Receive_IT(&huart1, (uint8_t *)&rx_byte, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
