@@ -1,2 +1,107 @@
 \relax 
-\gdef \@abspage@last{1}
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{brief}
+\citation{tkinter}
+\citation{pyserial}
+\citation{schematic}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{I}{1}{Introduction}{section.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {II}Requirements and Message Protocol}{1}{section.2}\protected@file@percent }
+\newlabel{sec:protocol}{{II}{1}{Requirements and Message Protocol}{section.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Framing rules and the response to each violation.}}{2}{table.1}\protected@file@percent }
+\newlabel{tab:framing}{{I}{2}{Framing rules and the response to each violation}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Newline-terminated frames of at most 63 characters}{2}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}An optional CRC-8 suffix catches errors that still look like commands}{2}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Nine characters encode the board}{2}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-D}}Nine requests and one unsolicited message}{2}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-E}}Every failure has its own NACK and a fixed check order}{2}{subsection.2.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Command set. $^\dagger $ marks a departure from the brief.}}{2}{table.2}\protected@file@percent }
+\newlabel{tab:commands}{{II}{2}{Command set. $^\dagger $ marks a departure from the brief}{table.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Every error response and when the server sends it.}}{2}{table.3}\protected@file@percent }
+\newlabel{tab:errors}{{III}{2}{Every error response and when the server sends it}{table.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-F}}Departures from the reference protocol}{2}{subsection.2.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces One session. A rejected move (step 4) is answered with a NACK and the game continues; a win (step 6) ends the game; an oversized line (step 8) is refused without running the \texttt  {NEW} at its end. Replies are dashed.}}{3}{figure.1}\protected@file@percent }
+\newlabel{fig:sequence}{{1}{3}{One session. A rejected move (step 4) is answered with a NACK and the game continues; a win (step 6) ends the game; an oversized line (step 8) is refused without running the \texttt {NEW} at its end. Replies are dashed}{figure.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {III}Specification and Design}{3}{section.3}\protected@file@percent }
+\newlabel{sec:design}{{III}{3}{Specification and Design}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}The server decides; the client only draws}{3}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Three states and a validation chain that writes last}{3}{subsection.3.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Who owns each decision.}}{3}{table.4}\protected@file@percent }
+\newlabel{tab:owner}{{IV}{3}{Who owns each decision}{table.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}The GUI never blocks and never guesses}{3}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}One USB cable carries power, programming and the serial link}{3}{subsection.3.4}\protected@file@percent }
+\citation{um1785}
+\citation{rm0091}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Server FSM with the move-validation branch. Red exits are NACKs that leave the state unchanged; green exits are successes. The symbol \texttt  {m} stands for the mark of the side to move.}}{4}{figure.2}\protected@file@percent }
+\newlabel{fig:fsm}{{2}{4}{Server FSM with the move-validation branch. Red exits are NACKs that leave the state unchanged; green exits are successes. The symbol \texttt {m} stands for the mark of the side to move}{figure.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces GUI application flowchart. Every board change comes from a reply line, never from the click itself.}}{4}{figure.3}\protected@file@percent }
+\newlabel{fig:gui}{{3}{4}{GUI application flowchart. Every board change comes from a reply line, never from the click itself}{figure.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Implementation}{4}{section.4}\protected@file@percent }
+\newlabel{sec:impl}{{IV}{4}{Implementation}{section.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Circuit: UART link to the PC, the LED and the button.}}{4}{figure.4}\protected@file@percent }
+\newlabel{fig:circuit}{{4}{4}{Circuit: UART link to the PC, the LED and the button}{figure.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}A register-level interrupt keeps up with 115200 baud}{4}{subsection.4.1}\protected@file@percent }
+\citation{tkinter}
+\newlabel{lst:isr}{{1}{5}{Interrupt handler and ring buffer (\texttt {stm32f0xx\_it.c}, \texttt {main.c})}{lstlisting.1}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Interrupt handler and ring buffer (\texttt  {stm32f0xx\textunderscore \penalty 0\hskip 0pt\relax it.c}, \texttt  {main.c}).}{5}{lstlisting.1}\protected@file@percent }
+\newlabel{lst:framer}{{2}{5}{Frame assembler (\texttt {main.c})}{lstlisting.2}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2}Frame assembler (\texttt  {main.c}).}{5}{lstlisting.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}The framer discards a bad line up to its terminator}{5}{subsection.4.2}\protected@file@percent }
+\newlabel{lst:gui}{{3}{5}{Reader thread, queue polling and handshake (\texttt {gui\_client.py})}{lstlisting.3}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3}Reader thread, queue polling and handshake (\texttt  {gui\textunderscore \penalty 0\hskip 0pt\relax client.py}).}{5}{lstlisting.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}The GUI waits on the port in a thread and draws from a queue}{5}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}The AI searches a copy of the board and moves through the human's write path}{5}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {V}Game Logic and Server Authority}{5}{section.5}\protected@file@percent }
+\newlabel{sec:authority}{{V}{5}{Game Logic and Server Authority}{section.5}{}}
+\newlabel{lst:ai}{{4}{6}{AI search (\texttt {main.c}, trimmed)}{lstlisting.4}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4}AI search (\texttt  {main.c}, trimmed).}{6}{lstlisting.4}\protected@file@percent }
+\newlabel{lst:move}{{5}{6}{Move validation (\texttt {main.c}, trimmed)}{lstlisting.5}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5}Move validation (\texttt  {main.c}, trimmed).}{6}{lstlisting.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Every check returns before the first write}{6}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}A rejected request cannot change the game state}{6}{subsection.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}The server alternates the turn and can check a named player}{6}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}The AI cannot make an illegal move}{6}{subsection.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Undo restores the board and the turn from the history}{7}{subsection.5.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-F}}Win is checked before draw, for the mover only}{7}{subsection.5.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-G}}The client holds no rules}{7}{subsection.5.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Protocol Robustness and Integrity}{7}{section.6}\protected@file@percent }
+\newlabel{sec:robust}{{VI}{7}{Protocol Robustness and Integrity}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}A 500 ms timeout is far longer than any frame}{7}{subsection.6.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Bad input, the server's handling, and the test that checks it.}}{7}{table.5}\protected@file@percent }
+\newlabel{tab:threats}{{V}{7}{Bad input, the server's handling, and the test that checks it}{table.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}The checksum detects corruption the framer cannot see}{7}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}The next terminator resynchronises the stream}{7}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-D}}No path in the main loop waits without a bound}{7}{subsection.6.4}\protected@file@percent }
+\citation{pytest}
+\citation{pyserial}
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Validation}{8}{section.7}\protected@file@percent }
+\newlabel{sec:valid}{{VII}{8}{Validation}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-A}}One fixture puts the board into a known state before every test}{8}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-B}}21 of 23 tests passed on the first board run, and the two failures were real}{8}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-C}}24 extension tests check the checksum, the AI and undo}{8}{subsection.7.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces The brief's required tests and their results on the board.}}{8}{table.6}\protected@file@percent }
+\newlabel{tab:required}{{VI}{8}{The brief's required tests and their results on the board}{table.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VII}{\ignorespaces Extension tests and their results on the board.}}{8}{table.7}\protected@file@percent }
+\newlabel{tab:ext}{{VII}{8}{Extension tests and their results on the board}{table.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-D}}Code review found five bugs before the board did, and the board found one more}{8}{subsection.7.4}\protected@file@percent }
+\bibstyle{IEEEtran}
+\bibdata{refs}
+\bibcite{brief}{1}
+\bibcite{tkinter}{2}
+\bibcite{pyserial}{3}
+\bibcite{schematic}{4}
+\bibcite{um1785}{5}
+\bibcite{rm0091}{6}
+\bibcite{pytest}{7}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces \textcolor {phred}{[What the screenshot shows and what to notice in it.]}}}{9}{figure.5}\protected@file@percent }
+\newlabel{fig:screenshot}{{5}{9}{\ph {What the screenshot shows and what to notice in it.}}{figure.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VIII}Conclusion}{9}{section.8}\protected@file@percent }
+\newlabel{sec:conclusion}{{VIII}{9}{Conclusion}{section.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {IX}Video}{9}{section.9}\protected@file@percent }
+\newlabel{sec:video}{{IX}{9}{Video}{section.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {X}Code}{9}{section.10}\protected@file@percent }
+\newlabel{sec:code}{{X}{9}{Code}{section.10}{}}
+\@writefile{toc}{\contentsline {section}{References}{9}{section*.1}\protected@file@percent }
+\gdef \@abspage@last{9}
