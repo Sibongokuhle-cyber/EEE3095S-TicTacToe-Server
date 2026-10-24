@@ -37,9 +37,11 @@ the first four indices (9, 10, 99, $-1$) returned \texttt{NACK:RANGE}, but the
 fifth, a 15-digit number, returned \texttt{NACK:BADCMD}. In the oversize test a
 103-character line returned \texttt{NACK:BADCMD} instead of
 \texttt{NACK:TOOLONG}. Both failures involve frames much longer than the
-passing 6-character commands, which led us to the receive path described in
-Section~\ref{sec:impl}. The second run, after we replaced the HAL receive path
-with the register-level handler, is \ph{result: N passed, M failed in T s}.
+passing 6-character commands, which led me to the receive path described in
+Section~\ref{sec:impl}. After I replaced the HAL receive path with the
+register-level handler, all 47 tests passed on the first full run (27.3~s). They
+passed again in three further plain runs (27.3 to 27.5~s each) and in one run with a
+checksum on every request (27.8~s), so all five runs gave 47 of 47.
 
 \begin{table}[t]
 \centering
@@ -50,13 +52,13 @@ with the register-level handler, is \ph{result: N passed, M failed in T s}.
 \toprule
 Requirement (brief, p.~4) & Test name & Run 1 & Run 2 \\
 \midrule
-\texttt{CONNECT} returns \texttt{OK}; \texttt{NEW} returns an empty board & \texttt{test\_connect\_returns\_ok}; \texttt{test\_new\_returns\_empty\_board} & pass & \ph{res} \\
-A legal move changes the board exactly as expected & \texttt{test\_legal\_move\_changes\_board\_exactly} & pass & \ph{res} \\
-Occupied cell returns \texttt{NACK:OCCUPIED}, board unchanged & \texttt{test\_occupied\_move\_rejected\_and\_board\_unchanged} & pass & \ph{res} \\
-Out-of-range move returns \texttt{NACK:RANGE} & \texttt{test\_out\_of\_range\_rejected} & fail & \ph{res} \\
-Move after game over returns \texttt{NACK:NOGAME} & \texttt{test\_move\_after\_game\_over\_rejected} & pass & \ph{res} \\
-Scripted win and draw give the correct result & \texttt{test\_scripted\_win\_x}; \texttt{test\_scripted\_win\_o}; \texttt{test\_scripted\_draw} & pass & \ph{res} \\
-AI never makes an illegal move & \texttt{test\_ai\_never\_makes\_an\_illegal\_move\_and\_never\_loses} (\texttt{test\_extras.py}) & n/a & \ph{res} \\
+\texttt{CONNECT} returns \texttt{OK}; \texttt{NEW} returns an empty board & \texttt{test\_connect\_returns\_ok}; \texttt{test\_new\_returns\_empty\_board} & pass & pass \\
+A legal move changes the board exactly as expected & \texttt{test\_legal\_move\_changes\_board\_exactly} & pass & pass \\
+Occupied cell returns \texttt{NACK:OCCUPIED}, board unchanged & \texttt{test\_occupied\_move\_rejected\_and\_board\_unchanged} & pass & pass \\
+Out-of-range move returns \texttt{NACK:RANGE} & \texttt{test\_out\_of\_range\_rejected} & fail & pass \\
+Move after game over returns \texttt{NACK:NOGAME} & \texttt{test\_move\_after\_game\_over\_rejected} & pass & pass \\
+Scripted win and draw give the correct result & \texttt{test\_scripted\_win\_x}; \texttt{test\_scripted\_win\_o}; \texttt{test\_scripted\_draw} & pass & pass \\
+AI never makes an illegal move & \texttt{test\_ai\_never\_makes\_an\_illegal\_move\_and\_never\_loses} (\texttt{test\_extras.py}) & n/a & pass \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -82,17 +84,13 @@ tests with a checksum on every request and verifies every reply.
 \toprule
 Group & Tests & What they check & Board \\
 \midrule
-Checksum & 9 & test vector, reply carries a suffix only if the request did, wrong checksum rejected, corrupted payload caught & \ph{res} \\
-AI & 7 & one AI move per human move, blocks a threat, takes a win, 20 random games with no illegal AI move and no human win & \ph{res} \\
-History, undo & 8 & move list, undo restores board and turn (both modes), \texttt{NOUNDO}, \texttt{NOGAME}, \texttt{NOCONN} & \ph{res} \\
-All 47, \texttt{USE\_CRC=1} & 47 & the whole suite with a checksum on every request & \ph{res} \\
+Checksum & 9 & test vector, reply carries a suffix only if the request did, wrong checksum rejected, corrupted payload caught & 9/9 pass \\
+AI & 7 & one AI move per human move, blocks a threat, takes a win, 20 random games with no illegal AI move and no human win & 7/7 pass \\
+History, undo & 8 & move list, undo restores board and turn (both modes), \texttt{NOUNDO}, \texttt{NOGAME}, \texttt{NOCONN} & 8/8 pass \\
+All 47, \texttt{USE\_CRC=1} & 47 & the whole suite with a checksum on every request & 47/47 pass \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\ph{Optional, keep only if you run the PC build (tools/hostsim) yourself: before flashing
-we also ran all 47 tests against a PC build of \texttt{main.c} with the HAL stubbed out,
-plain and with \texttt{USE\_CRC=1}, and all passed. This is not a board result.}
 
 \begin{figure}[t]
 \centering
@@ -111,7 +109,7 @@ interrupt was never enabled, so no command was received; \texttt{atoi} turned
 \texttt{MOVE:abc} into a move on cell 0; the tail of an oversized line ran as a
 command; \texttt{NEW} was accepted in the middle of a game; and the hand-written
 boards in the first draw test were wrong, so that test would have failed on
-correct firmware. We fixed these before the first board run.
+correct firmware. I fixed these before the first board run.
 The board then exposed the receive-path overrun described in
 Section~\ref{sec:impl}. \ph{Add any bug you hit while running the board or the GUI
 that is not listed here.}

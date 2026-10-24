@@ -12,7 +12,8 @@ The server meets the compulsory requirements: it validates every request in a
 fixed order before writing state, detects wins and draws, rejects illegal,
 out-of-state and out-of-turn requests with specific NACKs, and recovers from
 partial, oversized and garbage input. The evidence is the first board run, where
-21 of 23 core tests passed, and \ph{the second run: N of 47}. The GUI connects,
+21 of 23 core tests passed, and after the fix all 47 tests passed on the board in each
+of five runs. The GUI connects,
 plays, shows the server's rejection reasons and disconnects. The three optional
 extensions work behind new commands: a CRC-8 checksum that stops a corrupted
 but valid-looking command, an AI opponent that cannot make an illegal move, and
@@ -27,10 +28,11 @@ any state change, and a test harness that drives the real device.
 frames has no protection, and a bit error in the suffix itself is not provably
 caught. Undo works only while a game is in progress. One client plays both sides, so
 \texttt{NACK:NOTURN} is exercised only through the optional mark that the GUI
-does not send. The receive-path overrun is our diagnosis from test evidence, not
-a captured flag. We measured no timing on the board: the 500~ms timeout is a
-design value, and we did not time the AI's search there. We did not enable the watchdog. No test covers a win on the ninth
-move. We ran everything on one board and one Windows PC, and the LED colours on
+does not send. The receive-path overrun is my diagnosis from test evidence, not
+a captured flag. I measured no timing on the board: the 500~ms timeout is a
+design value, and I did not time the AI's search there, although every AI reply arrived inside
+the harness's 2~s timeout. I did not enable the watchdog. No test covers a win on the ninth
+move. I ran everything on one board and one Windows PC, and the LED colours on
 that board are swapped, which one constant corrects in software.
 
 \textbf{Improvements.} A mandatory checksum mode would remove the unprotected

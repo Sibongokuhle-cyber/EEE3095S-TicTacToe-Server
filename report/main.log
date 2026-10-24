@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.10.2)  24 OCT 2026 22:07
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.10.2)  25 OCT 2026 00:52
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -694,11 +694,11 @@ Package hyperref Info: Link coloring OFF on input line 79.
 \@outlinefile=\write4
 \openout4 = `main.out'.
 
-LaTeX Font Info:    Trying to load font information for T1+pcr on input line 102.
+LaTeX Font Info:    Trying to load font information for T1+pcr on input line 101.
  (C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
-Underfull \hbox (badness 1661) in paragraph at lines 94--110
+Underfull \hbox (badness 1661) in paragraph at lines 93--110
 \T1/ptm/b/n/9 STM32F051 board that acts as the only ref-eree, and a
  []
 
@@ -721,7 +721,10 @@ Underfull \hbox (badness 2368) in paragraph at lines 120--133
 []\T1/ptm/b/n/10 Optional mark on \T1/pcr/b/n/10 MOVE\T1/ptm/b/n/10 . \T1/ptm/m/n/10 With one client play-ing
  []
 
-(figures/fig_sequence.tex)) (sections/03_design.tex [2] (figures/fig_fsm.tex) (figures/fig_gui.tex) (figures/fig_circuit.tex)) (sections/04_implementation.tex [3] [4] (C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
+[2] (figures/fig_sequence.tex)) (sections/03_design.tex (figures/fig_fsm.tex) (figures/fig_gui.tex) [3] (figures/fig_circuit.tex)
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+) (sections/04_implementation.tex [4] (C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 ) (C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstmisc.sty
 File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
@@ -731,7 +734,7 @@ LaTeX Font Info:    Font shape `T1/pcr/m/it' in size <7> not available
 (Font)              Font shape `T1/pcr/m/sl' tried instead on input line 41.
  (C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
-)) (sections/05_authority.tex [5]
+) [5]) (sections/05_authority.tex
 Underfull \hbox (badness 10000) in paragraph at lines 67--70
 []\T1/ptm/m/it/10 Unknown com-mand or no ses-sion. \T1/pcr/m/n/10 process_
  []
@@ -756,6 +759,11 @@ Underfull \hbox (badness 10000) in paragraph at lines 79--91
 
 Underfull \hbox (badness 10000) in paragraph at lines 79--91
 \T1/pcr/m/n/10 executed \T1/ptm/m/n/10 and \T1/pcr/m/n/10 test_ undo_ all_ the_ way_ back_
+ []
+
+
+Underfull \hbox (badness 4634) in paragraph at lines 101--111
+\T1/pcr/m/n/10 makes_ an_ illegal_ move_ and_ never_ loses \T1/ptm/m/n/10 plays
  []
 
 [6]) (sections/06_robustness.tex) (sections/07_validation.tex [7]) (sections/08_conclusion.tex [8]) (sections/09_video_code.tex) (main.bbl
@@ -789,17 +797,17 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 6D30C7F2909C43C9AE65F1C4E1787A82;11245.
  ) 
 Here is how much of TeX's memory you used:
- 30300 strings out of 467392
- 625852 string characters out of 5398799
- 1733646 words of memory out of 5000000
- 58956 multiletter control sequences out of 15000+600000
+ 30303 strings out of 467392
+ 625885 string characters out of 5398799
+ 1655382 words of memory out of 5000000
+ 58958 multiletter control sequences out of 15000+600000
  761125 words of font info for 179 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  92i,10n,96p,640b,1413s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr5.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy5.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy6.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/courier/ucrb8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/courier/ucrr8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/courier/ucrro8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/helvetic/uhvb8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/helvetic/uhvr8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/helvetic/uhvro8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmb8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmbi8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmri8a.pfb>
-Output written on main.pdf (9 pages, 327806 bytes).
+Output written on main.pdf (9 pages, 328661 bytes).
 PDF statistics:
- 538 PDF objects out of 1000 (max. 8388607)
- 179 named destinations out of 1000 (max. 500000)
+ 541 PDF objects out of 1000 (max. 8388607)
+ 180 named destinations out of 1000 (max. 500000)
  477 words of extra memory for PDF output out of 10000 (max. 10000000)
 

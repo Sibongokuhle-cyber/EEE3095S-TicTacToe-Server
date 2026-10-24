@@ -18,7 +18,7 @@ and the client never computes any of it. The firmware has two layers. Hardware
 code covers the USART interrupt, polled transmit, the LED and the button.
 Rule code covers \texttt{check\_win}, \texttt{check\_draw},
 \texttt{handle\_move} and the command dispatcher, which depend only on the
-game variables and on \texttt{send\_str}. We kept the rules apart from the
+game variables and on \texttt{send\_str}. I kept the rules apart from the
 interrupt and LED code so that they never depend on timing.
 
 \begin{table}[t]
@@ -95,7 +95,7 @@ dual-colour LED D9 sits on PB10 (red) and PB11 (green) behind 150\,$\Omega$
 resistors and lights when the pin is high. Red means X to move, green means O
 to move, both blinking means game over, and both off means IDLE. Button SW0 on
 PA0 reads low when pressed (the firmware enables the internal pull-up) and
-starts a new game if a session is open. On our board the red and green dies
+starts a new game if a session is open. On my board the red and green dies
 are physically swapped, so one constant (\texttt{BOARD\_RG\_SWAPPED}) swaps the
 two pins in software.
 

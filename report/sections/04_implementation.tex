@@ -12,19 +12,19 @@ Keep each listing short (10--25 lines) and narrow enough for one column; trim
 comments and boilerplate, and say that you did. Do not paste whole files.
 \end{guidance}
 
-The listings in this report are trimmed: we removed comments, blank lines and
+The listings in this report are trimmed: I removed comments, blank lines and
 unrelated declarations.
 
 \subsection{A register-level interrupt keeps up with 115200 baud}
 Listing~\ref{lst:isr} is the receive path. At 115200 baud a byte arrives every
-87\,$\mu$s. Our first version re-armed \texttt{HAL\_UART\_Receive\_IT} after every
+87\,$\mu$s. My first version re-armed \texttt{HAL\_UART\_Receive\_IT} after every
 byte~\cite{um1785}. On the board it answered 6-character commands correctly,
 but frames of 20 and 103 characters were answered with \texttt{NACK:BADCMD}
 instead of \texttt{NACK:RANGE} and \texttt{NACK:TOOLONG}, which means the
-server had flagged a UART fault mid-frame. We did not capture the overrun flag
-directly, so overrun is our diagnosis from this evidence. The handler now reads
+server had flagged a UART fault mid-frame. I did not capture the overrun flag
+directly, so overrun is my diagnosis from this evidence. The handler now reads
 the status register and the data register itself~\cite{rm0091}, which is a few
-dozen instructions long (we did not measure its run time). It clears the error flags, sets \texttt{rx\_fault}
+dozen instructions long (I did not measure its run time). It clears the error flags, sets \texttt{rx\_fault}
 so that the framer rejects the damaged frame, and pushes the byte into a
 128-byte ring buffer. The interrupt only writes \texttt{rx\_head} and the main
 loop only writes \texttt{rx\_tail}, so no lock is needed. The first version
@@ -86,7 +86,7 @@ while (rx_tail != rx_head) {
 \end{lstlisting}
 
 \subsection{The GUI waits on the port in a thread and draws from a queue}
-Listing~\ref{lst:gui} shows how the client stays responsive (we split one line for width). A blocking
+Listing~\ref{lst:gui} shows how the client stays responsive (I split one line for width). A blocking
 \texttt{readline} in a Tk callback would freeze the window for up to the
 port timeout on every call. The worker thread is the only code that blocks on
 the port; it hands lines to the Tk thread through a thread-safe queue, and the
@@ -128,9 +128,10 @@ re-checks that its chosen cell is empty first. A search that wrote to the real b
 could leave a half-explored position behind. Second, cells are tried centre,
 corners, then edges, which cuts the search: on a PC build of the same source the
 worst single decision, the first reply, takes 1\,260 calls to \texttt{negamax}
-(mean 35), against up to $8! = 40\,320$ move sequences without pruning. We have
-not timed the search on the board; it runs in the main loop while the receive
-interrupt keeps buffering bytes.
+(mean 35), against up to $8! = 40\,320$ move sequences without pruning. I have
+not timed the search on the board, but in all five full test runs every AI reply
+arrived inside the harness's 2~s read timeout. The search runs in the main loop
+while the receive interrupt keeps buffering bytes.
 
 \begin{lstlisting}[float=tp, language=C, caption={AI search (\texttt{main.c}, trimmed).}, label=lst:ai]
 int negamax(char *b, char me, char opp,

@@ -102,9 +102,9 @@ is unchanged. In AI mode the human is always X, so a mark \texttt{O} on a
 \texttt{ai\_reply} checks \texttt{board[idx] == '.'} again before it calls
 \texttt{apply\_move}, the same function a human \texttt{MOVE} ends in. A legal AI
 move is therefore true by construction, not by testing alone. Two checks back it
-up. On a PC build of the same \texttt{main.c} we enumerated every possible human
+up. On a PC build of the same \texttt{main.c} I enumerated every possible human
 strategy against the AI: 521 games, the human won none, the AI won 368 and 153
-were draws \ph{re-run the host check (tools/hostsim) so these numbers are yours}.
+were draws.
 \texttt{test\_ai\_never\_makes\_an\_illegal\_move\_and\_never\_loses} plays 20
 seeded random games on the board and checks that each reply differs from the
 previous board by exactly the human's X and one new O.
@@ -125,12 +125,12 @@ completes a line is a win and not a draw. Either result sets
 \texttt{GAME\_OVER}, after which \texttt{MOVE} returns \texttt{NACK:NOGAME}.
 \texttt{test\_scripted\_win\_x}, \texttt{test\_scripted\_win\_o} and
 \texttt{test\_scripted\_draw} cover these results. No test yet covers a win on the
-ninth move, \ph{so say so here or add that test and cite it}.
+ninth move, and Section~\ref{sec:conclusion} lists this as a limitation.
 
 \subsection{The client holds no rules}
 The GUI sends \texttt{MOVE:<i>} for any click, including a click on an occupied
 cell, and shows the server's reason. If the client also checked legality, two
 rule sets would have to stay identical, and they would disagree whenever the
-button started a game that the client did not see. Our own first GUI inferred
-the final mark after a \texttt{WIN} from the move count. We removed that guess,
+button started a game that the client did not see. My own first GUI inferred
+the final mark after a \texttt{WIN} from the move count. I removed that guess,
 and the GUI now asks for \texttt{STATE}.

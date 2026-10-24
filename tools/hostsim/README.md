@@ -12,3 +12,6 @@ appeared on hardware).
 It prints the AI statistics (all possible games against the AI, and the largest
 number of search calls in one decision), then the pytest results in plain mode and
 with `USE_CRC=1`.
+
+In WSL/Ubuntu install the Python packages first: `sudo apt install python3-pytest python3-serial`
+(or `python3 -m pip install --user --break-system-packages pytest pyserial`).

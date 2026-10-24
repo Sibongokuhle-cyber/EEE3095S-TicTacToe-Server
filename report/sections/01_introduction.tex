@@ -14,17 +14,17 @@ A serial game has two programs that can disagree about the state of the game.
 If the PC is trusted, a faulty or hostile client can place two marks in one
 turn, overwrite an occupied cell or keep playing after the game has ended, and
 the board and the screen then show different games. The project brief~\cite{brief}
-therefore makes the STM32 the referee. Our design guarantees one property: a
+therefore makes the STM32 the referee. My design guarantees one property: a
 request that the server rejects never changes the game state.
 
-We chose Tic-Tac-Toe, the baseline game in the brief, so that our effort went
+I chose Tic-Tac-Toe, the baseline game in the brief, so that my effort went
 into the protocol, the robustness of the server and the automated tests rather
 than into game rules. % CONFIRM: reword if you had a different reason.
 The client uses Tkinter~\cite{tkinter} because it ships with the standard
 Python installer and needs no extra installation, and pySerial~\cite{pyserial}
 for the serial port. % CONFIRM: reword if you had a different reason.
 
-Beyond the compulsory system we built three of the optional extensions that
+Beyond the compulsory system I built three of the optional extensions that
 the brief lists or recommends: a CRC-8 checksum on every frame, an AI opponent,
 and move history with undo. Each one sits behind new commands, so the compulsory
 protocol behaves exactly as before and the 23 core tests still apply.
@@ -36,9 +36,29 @@ protocol is line-framed ASCII with no spaces, so a person can test the server
 from a serial terminal. Third, one pytest harness drives the real board
 without human interaction, and every robustness rule has a named test.
 
-\textbf{Task allocation.} \ph{Who did what. Name each student and their areas
-(for example: firmware and protocol; GUI and test harness) and what you did
-together (protocol specification, integration, report).}
+\textbf{Task allocation and plan.} The brief allows teams of two; I worked alone,
+so I did all of the work: protocol, firmware, GUI, test harness, extensions and
+this report. Table~\ref{tab:plan} lists the milestones in the order I worked.
+
+\begin{table}[t]
+\centering
+\caption{Project plan: milestones and outputs.}
+\label{tab:plan}
+\footnotesize
+\begin{tabular}{@{}L{0.3cm}L{4.9cm}L{2.2cm}@{}}
+\toprule
+ & Milestone and output & Date \\
+\midrule
+1 & Protocol and server FSM specified & \ph{date} \\
+2 & Firmware: framing, state machine, validation & \ph{date} \\
+3 & Tkinter GUI client & \ph{date} \\
+4 & Test harness, 23 core tests; first board run & \ph{date} \\
+5 & Receive-path fix after the failed tests & \ph{date} \\
+6 & Extensions: checksum, AI, undo, 24 more tests & \ph{date} \\
+7 & Final board runs, report, video, repository & \ph{date} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \textbf{Structure.} Section~\ref{sec:protocol} defines the requirements, the
 message protocol and the extensions. Section~\ref{sec:design} presents the server FSM, the GUI

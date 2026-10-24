@@ -29,3 +29,14 @@ tools/hostsim/fwsim
 tools/hostsim/ai_count
 tools/hostsim/*.o
 tools/hostsim/build_main*.c
+
+# LaTeX build files (commit report/main.pdf, not the build output)
+report/*.aux
+report/*.log
+report/*.out
+report/*.bbl
+report/*.blg
+report/*.fls
+report/*.fdb_latexmk
+report/*.synctex.gz
+report/.texbuild/

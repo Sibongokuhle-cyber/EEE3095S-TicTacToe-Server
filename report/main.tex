@@ -83,8 +83,7 @@
 \normalsize Line-framed ASCII protocol, server-side validation and an automated board test suite}
 
 \author{
-\IEEEauthorblockN{Sibongokuhle Sibiya (\ph{student number})\quad
-                  \ph{Student B full name} (\ph{student number})}
+\IEEEauthorblockN{Sibongokuhle Sibiya (\ph{student number})}
 \IEEEauthorblockA{EEE3095S CS Project 2026, Department of Electrical Engineering\\
 University of Cape Town}
 }
@@ -92,21 +91,22 @@ University of Cape Town}
 \maketitle
 
 \begin{abstract}
-We built a two-player Tic-Tac-Toe server on an STM32F051 board that acts as the
+I built a two-player Tic-Tac-Toe server on an STM32F051 board that acts as the
 only referee, and a Python/Tkinter client that forwards clicks and draws what
 the server confirms. The two sides talk over the board's ST-Link virtual COM
 port (USART1, 115200~baud, 8N1) using newline-terminated ASCII frames of at
 most 63 characters. The server checks every request in a fixed order before it
 writes any state, so a rejected request leaves the game unchanged. It answers
 malformed, oversized, non-printable and incomplete frames with specific
-\texttt{NACK} codes. We added three optional extensions: a CRC-8 frame
+\texttt{NACK} codes. I added three optional extensions: a CRC-8 frame
 checksum, an AI opponent that moves through the same function as a human, and
 move history with undo. A pytest harness drives the real board without human
 input: 23 core tests and 24 extension tests. On the first run on the board,
 21 of the 23 core tests passed (the extension tests did not exist yet). The two
-failures exposed UART overruns in the HAL receive path, which we replaced with
-a register-level interrupt handler. \ph{Final result: N of 47 tests pass on the
-board after the fix; add the number once you have re-run the suite.}
+failures exposed UART overruns in the HAL receive path, which I replaced with
+a register-level interrupt handler. After that fix, all 47 tests passed on the
+board in each of five runs, four with plain frames and one with a checksum on
+every request.
 \end{abstract}
 
 \begin{guidance}[Before you start writing]

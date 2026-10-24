@@ -37,8 +37,8 @@ UART errors & flags cleared in the interrupt; frame rejected with \texttt{NACK:B
 \subsection{A 500 ms timeout is far longer than any frame}
 A 64-byte frame takes about 5.6~ms on the wire (10 bits per byte at 115200
 baud), so a healthy sender never reaches 500~ms between bytes, and a stalled
-sender is cleared within about half a second. Our test checks only that the
-\texttt{NACK:TIMEOUT} arrives inside the 2~s read window of the harness; we did
+sender is cleared within about half a second. My test checks only that the
+\texttt{NACK:TIMEOUT} arrives inside the 2~s read window of the harness; I did
 not measure the exact delay.
 
 \subsection{The checksum detects corruption the framer cannot see}
@@ -64,5 +64,5 @@ The framer loop ends when the ring is empty, which is at most 127 bytes. Transmi
 is polled with a 100~ms timeout per message. The main loop contains no
 \texttt{HAL\_Delay}: the button is debounced by comparing timestamps, and the only
 delays are the three LED flashes (600~ms) at start-up, before any request is
-accepted. We did not enable the independent watchdog, and
+accepted. I did not enable the independent watchdog, and
 \texttt{Error\_Handler} halts only if the HAL initialisation itself fails.

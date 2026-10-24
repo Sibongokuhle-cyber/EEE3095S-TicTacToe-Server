@@ -15,7 +15,7 @@ An authoritative game server running on the UCT STM32F051 dev board, plus a thin
 | Extensions | CRC-8 frame checksum, built-in AI opponent (`NEW:AI`), move history and undo (`HISTORY`, `UNDO`) |
 | Due | 27 October 23:59 |
 
-**Team:** _<name 1>_, _<name 2>_ — _<task allocation: who did firmware / GUI / tests / report>_
+**Author:** Sibongokuhle Sibiya (individual project: protocol, firmware, GUI, tests, extensions and report). Student number: _<add>_
 
 ---
 
@@ -62,6 +62,7 @@ TicTacToeServer/
 │   ├── gui_client.py                  # ★ Tkinter GUI client
 │   └── boot_test.py                   #   quick "is the board talking?" link check
 ├── tools/
+│   ├── time_ai.py                     #   times MOVE replies on the board (AI search time estimate)
 │   └── hostsim/                       #   PC build of main.c + stubs: pre-flash check (not a board test), AI statistics
 ├── tests/
 │   ├── conftest.py                    # ★ pytest fixture + CRC helpers: finds the board, resets it to a known state
@@ -423,6 +424,9 @@ main loop ─► process_rx(): ring ─► line framer ─► process_command() 
 | Stretch features: AI opponent, move history / undo | `NEW:AI`, `HISTORY`, `UNDO` (§6.6) |
 | Protocol integrity: checksum (recommended) | CRC-8 suffix (§6.1, §6.6) |
 | Server FSM, GUI flowchart, circuit diagram | §5 (FSM); GUI flowchart and circuit diagram go in the report |
+
+### Timing the AI on the board (optional)
+`python tools/time_ai.py COM14` times the reply to each possible first move, in a two-player game and in an AI game; the difference estimates the AI's search time. Close the GUI first.
 
 ### Pre-flash check on a PC (optional)
 `tools/hostsim/` builds `main.c` for a PC with the HAL stubbed out and runs the whole pytest suite against it, plain and with `USE_CRC=1`, and prints the AI statistics (`bash tools/hostsim/run_hostsim.sh`, Linux/macOS/WSL). It catches logic errors before flashing but has no real UART timing, so it is **not** a substitute for the board run.
