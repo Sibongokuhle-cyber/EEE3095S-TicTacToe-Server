@@ -23,3 +23,9 @@ __pycache__/
 .pytest_cache/
 .venv/
 env/
+
+# Host simulation build output
+tools/hostsim/fwsim
+tools/hostsim/ai_count
+tools/hostsim/*.o
+tools/hostsim/build_main*.c

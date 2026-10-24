@@ -74,6 +74,11 @@ GameState game_state = STATE_IDLE;
 uint8_t connected = 0;          // session flag, set by CONNECT, cleared by DISCONNECT
 char board[9];
 char turn = 'X';
+uint8_t ai_mode = 0;            // 1 = built-in AI plays O (human is X)
+uint8_t history[9];             // cell index of every move, in order played
+uint8_t hist_len = 0;
+char    last_mover = 'X';       // mark of the most recent move (for WIN:<m>)
+uint8_t reply_crc = 0;          // 1 = replies carry *HH (set when the last frame did)
 
 // UART receive: ISR -> ring buffer -> main-loop line framer
 #define RX_RING_SIZE      128
@@ -95,12 +100,23 @@ static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void game_new(void);
+int  line_win(const char *b, char p);
+int  board_full(const char *b);
 int  check_win(char p);
 int  check_draw(void);
+int  apply_move(int idx);
 void send_str(const char *s);
 void send_board_ok(void);
 void send_board_state(void);
+void send_move_result(int r);
 void handle_move(const char *args);
+void handle_undo(void);
+void handle_history(void);
+int  negamax(char *b, char me, char opp, int depth, int alpha, int beta);
+int  ai_choose(char me);
+int  ai_reply(void);
+uint8_t crc8(const char *s, uint16_t n);
+int  strip_checksum(char *buf, uint16_t *len);
 void process_command(char *cmd);
 void process_rx(void);
 void check_frame_timeout(void);
@@ -299,34 +315,155 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* ============================ game logic ================================== */
+enum { MV_CONTINUE = 0, MV_WIN, MV_DRAW };
+
 void game_new(void) {
     memset(board, '.', 9);
     turn = 'X';
+    hist_len = 0;
     game_state = STATE_IN_PROGRESS;
 }
 
-int check_win(char p) {
-    static const uint8_t lines[8][3] = {
-        {0,1,2},{3,4,5},{6,7,8},
-        {0,3,6},{1,4,7},{2,5,8},
-        {0,4,8},{2,4,6}
-    };
+static const uint8_t win_lines[8][3] = {
+    {0,1,2},{3,4,5},{6,7,8},
+    {0,3,6},{1,4,7},{2,5,8},
+    {0,4,8},{2,4,6}
+};
+
+int line_win(const char *b, char p) {
     for (int i = 0; i < 8; i++) {
-        if (board[lines[i][0]] == p &&
-            board[lines[i][1]] == p &&
-            board[lines[i][2]] == p) return 1;
+        if (b[win_lines[i][0]] == p &&
+            b[win_lines[i][1]] == p &&
+            b[win_lines[i][2]] == p) return 1;
     }
     return 0;
 }
 
-int check_draw(void) {
-    for (int i = 0; i < 9; i++) if (board[i] == '.') return 0;
+int board_full(const char *b) {
+    for (int i = 0; i < 9; i++) if (b[i] == '.') return 0;
     return 1;
+}
+
+int check_win(char p)  { return line_win(board, p); }
+int check_draw(void)   { return board_full(board); }
+
+/* The ONLY function that writes a mark to the board. Used by the human's MOVE
+ * and by the AI, so both obey the same rules. The caller has already checked
+ * that idx is in range and the cell is empty.                                */
+int apply_move(int idx) {
+    history[hist_len++] = (uint8_t)idx;
+    board[idx] = turn;
+    last_mover = turn;
+    if (check_win(turn))   { game_state = STATE_GAME_OVER; return MV_WIN; }
+    if (board_full(board)) { game_state = STATE_GAME_OVER; return MV_DRAW; }
+    turn = (turn == 'X') ? 'O' : 'X';
+    return MV_CONTINUE;
+}
+
+/* ============================ AI opponent ================================= *
+ * Negamax with alpha-beta pruning on a COPY of the board (the real board is
+ * only changed by apply_move). Score from the mover's view: win = 10 - depth,
+ * draw = 0, loss = -(10 - depth). Cells are tried centre, corners, edges, so
+ * the first best move is deterministic and pruning is effective.            */
+#ifndef AI_NODE_HOOK
+#define AI_NODE_HOOK()   /* host-test hook that counts search nodes; empty on the target */
+#endif
+static const uint8_t ai_order[9] = {4, 0, 2, 6, 8, 1, 3, 5, 7};
+
+int negamax(char *b, char me, char opp, int depth, int alpha, int beta) {
+    int best = -100;
+    AI_NODE_HOOK();
+    for (int k = 0; k < 9; k++) {
+        int i = ai_order[k], sc;
+        if (b[i] != '.') continue;
+        b[i] = me;
+        if (line_win(b, me))     sc = 10 - depth;
+        else if (board_full(b))  sc = 0;
+        else                     sc = -negamax(b, opp, me, depth + 1, -beta, -alpha);
+        b[i] = '.';
+        if (sc > best)   best = sc;
+        if (best > alpha) alpha = best;
+        if (alpha >= beta) break;
+    }
+    return best;
+}
+
+int ai_choose(char me) {
+    char b[9];
+    char opp = (me == 'X') ? 'O' : 'X';
+    int best = -100, best_i = -1;
+    memcpy(b, board, 9);
+    for (int k = 0; k < 9; k++) {
+        int i = ai_order[k], sc;
+        if (b[i] != '.') continue;
+        b[i] = me;
+        if (line_win(b, me))     sc = 10;
+        else if (board_full(b))  sc = 0;
+        else                     sc = -negamax(b, opp, me, 1, -100, -best);
+        b[i] = '.';
+        if (sc > best) { best = sc; best_i = i; }
+    }
+    return best_i;
+}
+
+/* The AI plays the side to move. It only ever picks an empty cell, and the
+ * cell is re-checked before apply_move, so it cannot make an illegal move.   */
+int ai_reply(void) {
+    int idx = ai_choose(turn);
+    if (idx < 0 || board[idx] != '.') return MV_CONTINUE;
+    return apply_move(idx);
+}
+
+/* ============================== checksum ================================== *
+ * Optional frame suffix "*HH": HH = two hex digits of CRC-8 (poly 0x07, init
+ * 0, no reflection, no final XOR) over the payload before the '*'.
+ * crc8("123456789") = 0xF4. A frame that carries a valid-looking suffix is
+ * verified (CRC_BAD -> NACK:CHECKSUM, nothing executed) and the reply carries
+ * a suffix too; a frame without one is accepted and answered without one.   */
+enum { CRC_NONE = 0, CRC_OK, CRC_BAD };
+
+uint8_t crc8(const char *s, uint16_t n) {
+    uint8_t c = 0;
+    while (n--) {
+        c ^= (uint8_t)*s++;
+        for (int i = 0; i < 8; i++)
+            c = (c & 0x80) ? (uint8_t)((c << 1) ^ 0x07) : (uint8_t)(c << 1);
+    }
+    return c;
+}
+
+static int hexval(char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    return -1;
+}
+
+int strip_checksum(char *buf, uint16_t *len) {
+    uint16_t n = *len;
+    int hi = -1, lo = -1;
+    if (n >= 3 && buf[n - 3] == '*' &&
+        (hi = hexval(buf[n - 2])) >= 0 && (lo = hexval(buf[n - 1])) >= 0) {
+        buf[n - 3] = '\0';
+        *len = (uint16_t)(n - 3);
+        reply_crc = 1;
+        return (crc8(buf, (uint16_t)(n - 3)) == (uint8_t)((hi << 4) | lo)) ? CRC_OK : CRC_BAD;
+    }
+    reply_crc = 0;
+    return CRC_NONE;
 }
 
 /* ============================== output ==================================== */
 void send_str(const char *s) {
-    HAL_UART_Transmit(&huart1, (uint8_t *)s, (uint16_t)strlen(s), 100);
+    size_t n = strlen(s);
+    if (reply_crc && n >= 2 && n < 60 && s[n - 1] == '\n') {
+        char buf[64];
+        memcpy(buf, s, n - 1);
+        snprintf(buf + n - 1, 5, "*%02X\n", crc8(s, (uint16_t)(n - 1)));
+        HAL_UART_Transmit(&huart1, (uint8_t *)buf, (uint16_t)(n + 3), 100);
+    } else {
+        HAL_UART_Transmit(&huart1, (uint8_t *)s, (uint16_t)n, 100);
+    }
 }
 
 void send_board_ok(void) {
@@ -341,12 +478,25 @@ void send_board_state(void) {
     send_str(buf);
 }
 
+void send_move_result(int r) {
+    if (r == MV_WIN) {
+        char buf[16];
+        snprintf(buf, sizeof(buf), "WIN:%c\n", last_mover);
+        send_str(buf);
+    } else if (r == MV_DRAW) {
+        send_str("DRAW\n");
+    } else {
+        send_board_ok();
+    }
+}
+
 /* ============================ MOVE handler ================================ *
  * Grammar:  MOVE:<int>            e.g. MOVE:4
  *           MOVE:<int>:<X|O>      optional mark; rejected with NOTURN if it
  *                                 is not the side to move.
  * Anything else after "MOVE:" is NACK:BADCMD. Nothing is changed unless every
- * check passes.                                                              */
+ * check passes. In AI mode the AI answers immediately, so the reply shows the
+ * board after BOTH moves (or the final result).                              */
 void handle_move(const char *p) {
     if (game_state != STATE_IN_PROGRESS) { send_str("NACK:NOGAME\n"); return; }
 
@@ -371,42 +521,58 @@ void handle_move(const char *p) {
     if (mark && mark != turn)   { send_str("NACK:NOTURN\n");   return; }
     if (board[idx] != '.')      { send_str("NACK:OCCUPIED\n"); return; }
 
-    board[idx] = turn;
+    int r = apply_move(idx);                 // first write to the board
+    if (r == MV_CONTINUE && ai_mode) r = ai_reply();
+    send_move_result(r);
+}
 
-    if (check_win(turn)) {
-        char buf[16];
-        game_state = STATE_GAME_OVER;
-        snprintf(buf, sizeof(buf), "WIN:%c\n", turn);
-        send_str(buf);
-        return;
-    }
-    if (check_draw()) {
-        game_state = STATE_GAME_OVER;
-        send_str("DRAW\n");
-        return;
-    }
-    turn = (turn == 'X') ? 'O' : 'X';
+/* UNDO: IN_PROGRESS only. Removes the last move (hot-seat) or the last pair of
+ * moves (AI mode, so it is the human's turn again). Checks first, then writes. */
+void handle_undo(void) {
+    uint8_t n = ai_mode ? 2 : 1;
+    if (game_state != STATE_IN_PROGRESS) { send_str("NACK:NOGAME\n");  return; }
+    if (hist_len < n)                    { send_str("NACK:NOUNDO\n");  return; }
+    while (n--) board[history[--hist_len]] = '.';
+    turn = (hist_len % 2 == 0) ? 'X' : 'O';
     send_board_ok();
 }
 
+/* HISTORY: "HIST:" followed by the cell indices in move order, comma separated
+ * ("HIST:4,0,2"; "HIST:" when there are none). Same states as STATE.         */
+void handle_history(void) {
+    char buf[40];
+    int k = 0;
+    if (game_state == STATE_IDLE) { send_str("NACK:NOGAME\n"); return; }
+    memcpy(buf, "HIST:", 5); k = 5;
+    for (int i = 0; i < hist_len; i++) {
+        if (i) buf[k++] = ',';
+        buf[k++] = (char)('0' + history[i]);
+    }
+    buf[k++] = '\n';
+    buf[k] = '\0';
+    send_str(buf);
+}
+
 /* ========================= command dispatcher ============================= *
- * IDLE        : CONNECT, NEW
- * IN_PROGRESS : MOVE, STATE, RESIGN
- * GAME_OVER   : NEW, STATE, DISCONNECT
+ * IDLE        : CONNECT, NEW, NEW:AI
+ * IN_PROGRESS : MOVE, STATE, HISTORY, UNDO, RESIGN
+ * GAME_OVER   : NEW, NEW:AI, STATE, HISTORY, DISCONNECT
  * Departures (documented): CONNECT is accepted in any state (idempotent), and
  * DISCONNECT is accepted in any state (aborts the game, returns to IDLE).
- * Extra NACKs: NOCONN (no session), TOOLONG, TIMEOUT.                        */
+ * Extra NACKs: NOCONN, TOOLONG, TIMEOUT, CHECKSUM, NOUNDO.                   */
 void process_command(char *cmd) {
     if (strcmp(cmd, "CONNECT") == 0) { connected = 1; send_str("OK\n"); return; }
 
-    int known = (strcmp(cmd, "NEW") == 0)   || (strcmp(cmd, "STATE") == 0) ||
-                (strcmp(cmd, "RESIGN") == 0) || (strcmp(cmd, "DISCONNECT") == 0) ||
-                (strncmp(cmd, "MOVE:", 5) == 0);
+    int known = (strcmp(cmd, "NEW") == 0)     || (strcmp(cmd, "NEW:AI") == 0) ||
+                (strcmp(cmd, "STATE") == 0)   || (strcmp(cmd, "RESIGN") == 0) ||
+                (strcmp(cmd, "UNDO") == 0)    || (strcmp(cmd, "HISTORY") == 0) ||
+                (strcmp(cmd, "DISCONNECT") == 0) || (strncmp(cmd, "MOVE:", 5) == 0);
     if (!known)     { send_str("NACK:BADCMD\n"); return; }
     if (!connected) { send_str("NACK:NOCONN\n"); return; }
 
-    if (strcmp(cmd, "NEW") == 0) {
+    if (strcmp(cmd, "NEW") == 0 || strcmp(cmd, "NEW:AI") == 0) {
         if (game_state == STATE_IN_PROGRESS) { send_str("NACK:BADCMD\n"); return; }
+        ai_mode = (cmd[3] == ':');
         game_new();
         send_board_ok();
         return;
@@ -416,6 +582,8 @@ void process_command(char *cmd) {
         send_board_state();
         return;
     }
+    if (strcmp(cmd, "HISTORY") == 0) { handle_history(); return; }
+    if (strcmp(cmd, "UNDO") == 0)    { handle_undo();    return; }
     if (strcmp(cmd, "RESIGN") == 0) {
         if (game_state != STATE_IN_PROGRESS) { send_str("NACK:NOGAME\n"); return; }
         game_state = STATE_GAME_OVER;
@@ -424,6 +592,7 @@ void process_command(char *cmd) {
     }
     if (strcmp(cmd, "DISCONNECT") == 0) {
         connected = 0;
+        ai_mode = 0;
         game_state = STATE_IDLE;
         send_str("OK\n");
         return;
@@ -433,9 +602,9 @@ void process_command(char *cmd) {
 
 /* ============================== framing =================================== *
  * Frames end at '\n' or '\r' (so CRLF works; the empty second terminator is
- * ignored). Max LINE_MAX_LEN chars. Oversized or non-printable frames are
- * discarded UNTIL the next terminator and answered with exactly one NACK, so
- * the tail of a bad frame can never be executed as a command.               */
+ * ignored). Max LINE_MAX_LEN chars (the "*HH" suffix counts). Oversized or
+ * non-printable frames are discarded UNTIL the next terminator and answered
+ * with exactly one NACK, so the tail of a bad frame can never be executed.   */
 void process_rx(void) {
     if (rx_fault) {
         rx_fault = 0;
@@ -451,7 +620,10 @@ void process_rx(void) {
                 send_str(frame_err == FE_TOOLONG ? "NACK:TOOLONG\n" : "NACK:BADCMD\n");
             } else if (line_len > 0) {
                 line_buf[line_len] = '\0';
-                process_command(line_buf);
+                if (strip_checksum(line_buf, &line_len) == CRC_BAD)
+                    send_str("NACK:CHECKSUM\n");        // nothing is executed
+                else
+                    process_command(line_buf);
             }
             line_len = 0;
             frame_err = FE_NONE;

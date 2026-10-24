@@ -4,6 +4,9 @@ Thin client: the STM32 owns all game state and rules. The board is redrawn ONLY
 from server replies (OK:BOARD:..., BOARD:...). After a WIN/DRAW the client asks
 the server for STATE instead of guessing the final mark.
 
+Extensions: every request carries a CRC-8 suffix (*HH) and replies are verified;
+"Play vs AI" starts the game with NEW:AI; Undo sends UNDO; History sends HISTORY.
+
     pip install pyserial
     python gui_client.py
 """
@@ -21,6 +24,28 @@ HANDSHAKE_TRIES = 15           # ~9 s, covers MCU boot / reset on port open
 REPLY_TIMEOUT_MS = 2000
 
 
+def crc8(data: bytes) -> int:
+    """CRC-8, poly 0x07, init 0 (same as the firmware). crc8(b"123456789") == 0xF4."""
+    c = 0
+    for b in data:
+        c ^= b
+        for _ in range(8):
+            c = ((c << 1) ^ 0x07) & 0xFF if c & 0x80 else (c << 1) & 0xFF
+    return c
+
+
+def split_checksum(line):
+    """Return (payload, status): status None = no suffix, True = valid, False = wrong."""
+    if len(line) >= 3 and line[-3] == "*":
+        try:
+            got = int(line[-2:], 16)
+        except ValueError:
+            return line, None
+        payload = line[:-3]
+        return payload, got == crc8(payload.encode())
+    return line, None
+
+
 class TicTacToeClient:
     def __init__(self, root):
         self.root = root
@@ -34,6 +59,8 @@ class TicTacToeClient:
         self.handshake_tries = 0
         self.result_text = None       # "Winner: X" / "Draw", shown once STATE arrives
         self.board = ["."] * 9
+        self.have_game = False        # server has a game (live or finished) to report on
+        self.ai_on = False            # mode of the game we asked for
 
         self._build_ui()
         self._refresh_ports()
@@ -73,6 +100,18 @@ class TicTacToeClient:
         self.new_btn.pack(side=tk.LEFT, padx=5)
         self.resign_btn = ttk.Button(ctrl, text="Resign", command=self._resign)
         self.resign_btn.pack(side=tk.LEFT, padx=5)
+        self.undo_btn = ttk.Button(ctrl, text="Undo", command=self._undo)
+        self.undo_btn.pack(side=tk.LEFT, padx=5)
+        self.hist_btn = ttk.Button(ctrl, text="History", command=self._history)
+        self.hist_btn.pack(side=tk.LEFT, padx=5)
+
+        opts = ttk.Frame(self.root, padding=(5, 0, 5, 5))
+        opts.pack()
+        self.ai_var = tk.BooleanVar(value=False)
+        self.ai_chk = ttk.Checkbutton(opts, text="Play vs AI (you are X)", variable=self.ai_var)
+        self.ai_chk.pack(side=tk.LEFT, padx=5)
+        self.hist_var = tk.StringVar(value="")
+        ttk.Label(opts, textvariable=self.hist_var).pack(side=tk.LEFT, padx=10)
 
     def _set_controls(self):
         """Single place that decides what is clickable."""
@@ -81,8 +120,12 @@ class TicTacToeClient:
             b.config(state=tk.NORMAL if playable else tk.DISABLED)
         self.connect_btn.config(state=tk.DISABLED if self.ser else tk.NORMAL)
         self.disconnect_btn.config(state=tk.NORMAL if self.ser else tk.DISABLED)
-        self.new_btn.config(state=tk.NORMAL if self.connected else tk.DISABLED)
+        can_new = self.connected and not playable      # server refuses NEW during a live game
+        self.new_btn.config(state=tk.NORMAL if can_new else tk.DISABLED)
+        self.ai_chk.config(state=tk.NORMAL if can_new else tk.DISABLED)
         self.resign_btn.config(state=tk.NORMAL if playable else tk.DISABLED)
+        self.undo_btn.config(state=tk.NORMAL if playable else tk.DISABLED)
+        self.hist_btn.config(state=tk.NORMAL if (self.connected and self.have_game) else tk.DISABLED)
 
     # -------------------------------------------------------------- serial
     def _refresh_ports(self):
@@ -145,6 +188,8 @@ class TicTacToeClient:
         self.game_over = True
         self.busy = False
         self.result_text = None
+        self.have_game = False
+        self.hist_var.set("")
         self._set_controls()
 
     def _on_close(self):
@@ -173,6 +218,14 @@ class TicTacToeClient:
         if not self.ser:
             return
 
+        # Verify the checksum if the reply has one; never act on a corrupted reply.
+        line, crc_ok = split_checksum(line)
+        if crc_ok is False:
+            self._request_done()
+            self.status.set("Corrupted reply ignored (bad checksum) - resyncing")
+            self._request("STATE")                    # ask again; the server has the truth
+            return
+
         if line == "OK":
             if not self.connected:
                 self.connected = True
@@ -182,14 +235,21 @@ class TicTacToeClient:
         elif line.startswith("OK:BOARD:"):            # NEW, accepted MOVE, or button-initiated new game
             self._set_board(line[len("OK:BOARD:"):])
             self.game_over = False
+            self.have_game = True
             self.result_text = None
-            self.status.set("Game in progress")
+            self.hist_var.set("")
+            self.status.set("Game in progress" + (" (vs AI)" if self.ai_on else ""))
             self._request_done()
 
         elif line.startswith("BOARD:"):               # reply to STATE
             self._set_board(line[len("BOARD:"):])
             if self.result_text:
                 self.status.set(self.result_text)
+            self._request_done()
+
+        elif line.startswith("HIST:"):                # reply to HISTORY
+            moves = line[5:]
+            self.hist_var.set("Moves: " + (moves.replace(",", " ") if moves else "none yet"))
             self._request_done()
 
         elif line.startswith("WIN:"):
@@ -216,6 +276,7 @@ class TicTacToeClient:
             self._request_done()
             if reason == "NOGAME":
                 self.game_over = True                 # server says there is no live game
+                self.have_game = False
             messagebox.showwarning("Rejected by server", self._explain(reason))
 
         else:                                         # boot banner etc.
@@ -233,6 +294,8 @@ class TicTacToeClient:
             "NOCONN": "Not connected. Press Connect.",
             "TOOLONG": "Message too long.",
             "TIMEOUT": "Message incomplete (timed out).",
+            "CHECKSUM": "The server saw a corrupted message and ignored it. Try again.",
+            "NOUNDO": "There is no move to undo.",
         }.get(reason, reason)
 
     def _set_board(self, board_str):
@@ -246,7 +309,7 @@ class TicTacToeClient:
     def _send(self, cmd):
         if self.ser and self.ser.is_open:
             try:
-                self.ser.write((cmd + "\n").encode())
+                self.ser.write(f"{cmd}*{crc8(cmd.encode()):02X}\n".encode())
                 self.ser.flush()
             except Exception as e:
                 self.status.set(f"Write error: {e}")
@@ -278,7 +341,14 @@ class TicTacToeClient:
         self._request(f"MOVE:{idx}")      # legality is decided by the server only
 
     def _new_game(self):
-        self._request("NEW")
+        self.ai_on = bool(self.ai_var.get())
+        self._request("NEW:AI" if self.ai_on else "NEW")
+
+    def _undo(self):
+        self._request("UNDO")             # board changes only when the server confirms
+
+    def _history(self):
+        self._request("HISTORY")
 
     def _resign(self):
         self._request("RESIGN")           # UI changes only when the server confirms
