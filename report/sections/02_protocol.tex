@@ -1,0 +1,147 @@
+\section{Requirements and Message Protocol}
+\label{sec:protocol}
+
+\begin{guidance}[Requirements and message protocol (15 marks)]
+Describe and diagram your \textbf{final} protocol: physical link (interface,
+baud rate, frame format), \textbf{framing} (terminator, maximum frame length,
+timeout), \textbf{board encoding}, the complete \textbf{command set}, and
+\textbf{every response and error}. Cover new game, move, win/draw and
+disconnect. Include at least one \textbf{sequence diagram}. \textbf{Highlight
+every departure} from the brief's reference protocol (p.~3) and justify each
+one. A reader should be able to write a compatible client from this section
+alone.
+\end{guidance}
+
+\subsection{Newline-terminated frames of at most 63 characters}
+The link is USART1 on PA9 (TX) and PA10 (RX), routed through the on-board
+ST-Link virtual COM port~\cite{schematic}: 115200 baud, 8 data bits, no
+parity, 1 stop bit, no flow control. Table~\ref{tab:framing} lists the framing
+rules. Every rule has one reply, so a client can tell why a frame was refused.
+
+\begin{table}[t]
+\centering
+\caption{Framing rules and the response to each violation.}
+\label{tab:framing}
+\footnotesize
+\begin{tabular}{@{}L{2.6cm}L{5.4cm}@{}}
+\toprule
+Rule & Server behaviour \\
+\midrule
+Terminator & \texttt{\textbackslash n} or \texttt{\textbackslash r} ends a frame; an empty frame is ignored, so \texttt{\textbackslash r\textbackslash n} gives one reply \\
+Maximum length & 63 characters; the rest of the line is discarded up to the next terminator; one \texttt{NACK:TOOLONG} \\
+Incomplete frame & no terminator for 500~ms after the last byte: frame discarded, \texttt{NACK:TIMEOUT} \\
+Invalid character & any byte outside 0x20--0x7E: frame discarded, \texttt{NACK:BADCMD} \\
+UART fault & overrun, framing or noise error, or a full 128-byte receive ring: frame discarded, \texttt{NACK:BADCMD} \\
+Checksum & optional suffix \texttt{*HH} (CRC-8); a wrong value gives \texttt{NACK:CHECKSUM} and nothing runs \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{An optional CRC-8 suffix catches errors that still look like commands}
+Any frame may end in \texttt{*HH}, two hex digits of a CRC-8 (polynomial 0x07,
+initial value 0, no reflection) over everything before the asterisk; for example
+\texttt{MOVE:4} becomes \texttt{MOVE:4*75}, and the standard check value is
+\texttt{crc8("123456789")} $=$ \texttt{0xF4}. The server verifies a suffix
+before it parses the command and sends \texttt{NACK:CHECKSUM} on a mismatch.
+This catches a bit error that turns one valid command into another, such as
+\texttt{MOVE:4} into \texttt{MOVE:5}, which the framing rules cannot see. A
+reply carries a suffix exactly when the request did, so a client that sends
+plain frames is unaffected. Text that only looks like a suffix, such as
+\texttt{NEW*ZZ}, is not a checksum and is rejected as \texttt{NACK:BADCMD}.
+
+\subsection{Nine characters encode the board}
+The board is nine characters, cells 0 to 8 row by row, using \texttt{.} for
+empty, \texttt{X} and \texttt{O}. For example, \texttt{XO.XO....} is X in cells
+0 and 3, O in cells 1 and 4, and everything else empty. X always moves first.
+
+\subsection{Nine requests and one unsolicited message}
+Table~\ref{tab:commands} lists the command set. The client sends one request at
+a time and waits for the reply. The only message the server sends on its own is
+\texttt{OK:BOARD:.........}, which follows a new game started with the
+board's button; the client treats it like the reply to \texttt{NEW}, so the
+display stays in step with the board.
+
+\begin{table}[t]
+\centering
+\caption{Command set. $^\dagger$ marks a departure from the brief.}
+\label{tab:commands}
+\scriptsize
+\begin{tabular}{@{}L{1.9cm}L{1.8cm}L{4.3cm}@{}}
+\toprule
+Request & Accepted in & Success response \\
+\midrule
+\texttt{CONNECT} & any state$^\dagger$ & \texttt{OK} (opens the session) \\
+\texttt{NEW} & IDLE, GAME\_OVER & \texttt{OK:BOARD:<9>} \\
+\texttt{NEW:AI}$^\dagger$ & IDLE, GAME\_OVER & \texttt{OK:BOARD:<9>}; the AI plays O \\
+\texttt{MOVE:<i>} & IN\_PROGRESS & \texttt{OK:BOARD:<9>}, \texttt{WIN:X}, \texttt{WIN:O} or \texttt{DRAW}; in AI mode the board after the AI's reply \\
+\texttt{MOVE:<i>:<m>}$^\dagger$ & IN\_PROGRESS & as above; \texttt{<m>} is X or O \\
+\texttt{STATE} & IN\_PROGRESS, GAME\_OVER & \texttt{BOARD:<9>} \\
+\texttt{HISTORY}$^\dagger$ & IN\_PROGRESS, GAME\_OVER & \texttt{HIST:<i>,<i>,...} \\
+\texttt{UNDO}$^\dagger$ & IN\_PROGRESS & \texttt{OK:BOARD:<9>} \\
+\texttt{RESIGN} & IN\_PROGRESS & \texttt{OK:GAMEOVER} \\
+\texttt{DISCONNECT} & any state$^\dagger$ & \texttt{OK} (returns to IDLE) \\
+Button press$^\dagger$ & session open & unsolicited \texttt{OK:BOARD:.........} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Every failure has its own NACK and a fixed check order}
+Table~\ref{tab:errors} lists every error. When a request could fail several
+checks, the server uses one order: framing first, then whether the command is
+known, then the session, then the game state, and for \texttt{MOVE} the index
+syntax, the index range, the turn and the cell. A checksum, if present, is
+checked right after framing. Each request therefore has
+exactly one correct reply.
+
+\begin{table}[t]
+\centering
+\caption{Every error response and when the server sends it.}
+\label{tab:errors}
+\footnotesize
+\begin{tabular}{@{}L{2.5cm}L{5.5cm}@{}}
+\toprule
+Response & Sent when \\
+\midrule
+\texttt{NACK:BADCMD} & unknown or wrong-case command, bad \texttt{MOVE} syntax, non-printable byte, UART fault, or \texttt{NEW} during a game \\
+\texttt{NACK:NOGAME} & \texttt{MOVE}, \texttt{STATE} or \texttt{RESIGN} with no live game (IDLE, or \texttt{MOVE}/\texttt{RESIGN} after game over) \\
+\texttt{NACK:RANGE} & index is negative or above 8 \\
+\texttt{NACK:OCCUPIED} & the cell already holds a mark \\
+\texttt{NACK:NOTURN}$^\dagger$ & the optional mark is not the side to move \\
+\texttt{NACK:NOCONN}$^\dagger$ & a known command arrives before \texttt{CONNECT} \\
+\texttt{NACK:TOOLONG}$^\dagger$ & frame longer than 63 characters \\
+\texttt{NACK:TIMEOUT}$^\dagger$ & frame not terminated within 500~ms \\
+\texttt{NACK:CHECKSUM}$^\dagger$ & the \texttt{*HH} suffix does not match the payload \\
+\texttt{NACK:NOUNDO}$^\dagger$ & \texttt{UNDO} with no move to take back \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Departures from the reference protocol}
+\textbf{Optional mark on \texttt{MOVE}.} With one client playing both sides,
+the server cannot see an out-of-turn move in \texttt{MOVE:<i>}. The suffix
+\texttt{:<m>} names the player; the server answers \texttt{NACK:NOTURN} if
+\texttt{<m>} is not the side to move, which makes the rule testable. The GUI
+does not send the suffix. \textbf{\texttt{CONNECT} and \texttt{DISCONNECT} in
+any state.} A reconnecting client works after a crash, and closing the GUI
+mid-game always returns the server to IDLE. \textbf{Extra errors.}
+\texttt{NOCONN}, \texttt{TOOLONG} and \texttt{TIMEOUT} give a specific reply
+to a specific fault instead of one generic error. \textbf{Unsolicited board.}
+The button needs a way to tell the client that a new game began.
+\textbf{Extensions.} The checksum suffix, \texttt{NEW:AI}, \texttt{HISTORY},
+\texttt{UNDO} and their replies are optional additions; none of them changes the
+reply to a compulsory request.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig_sequence}
+\caption{One session. A rejected move (step 4) is answered with a NACK and
+the game continues; a win (step 6) ends the game; an oversized line (step 8) is
+refused without running the \texttt{NEW} at its end. Replies are dashed.}
+\label{fig:sequence}
+\end{figure}
+
+Figure~\ref{fig:sequence} shows one session. After the second \texttt{MOVE:0}
+is refused with \texttt{NACK:OCCUPIED}, the game continues from the same
+board. After the win, \texttt{STATE} returns the final board, because the
+server sends only \texttt{WIN:X} and not the board. In step 8 the server
+discards the whole 103-character line, including the \texttt{NEW} at its end.

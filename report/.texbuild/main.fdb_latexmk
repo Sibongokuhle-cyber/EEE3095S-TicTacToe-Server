@@ -1,0 +1,9 @@
+# Fdb version 4
+["pdflatex"] 0 "main.tex" ".texbuild/main.pdf" "main" 0 -1
+  ".texbuild/main.aux" 0 -1 0 "pdflatex"
+  "main.tex" 0 -1 0 ""
+  (generated)
+  ".texbuild/main.aux"
+  ".texbuild/main.log"
+  ".texbuild/main.pdf"
+  (rewritten before read)

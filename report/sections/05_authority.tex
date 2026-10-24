@@ -1,0 +1,136 @@
+\section{Game Logic and Server Authority}
+\label{sec:authority}
+
+\begin{guidance}[Game logic and server authority (15 marks)]
+Show: correct \textbf{move validation}; rejection of \textbf{illegal,
+out-of-turn and out-of-state} moves with specific errors; reliable
+\textbf{win and draw detection}; and a \textbf{client-untrusted} design. Most
+importantly, give an argument that a \textbf{rejected request cannot change the
+server state}, based on how your code is structured (e.g. every check runs
+before the first write), and point to the tests that check it. The brief calls
+this a ``proof''; make it a step-by-step argument a reader can verify against
+your code.
+\end{guidance}
+
+\subsection{Every check returns before the first write}
+Listing~\ref{lst:move} is \texttt{handle\_move}. It runs the checks in the
+order of Section~\ref{sec:protocol}: game state, syntax, range, turn, cell. Each
+failing check sends one NACK and returns. The parser uses only local variables,
+and saturates the number at 1000 so that a long digit string cannot overflow;
+an earlier version used \texttt{atoi}, which turned \texttt{MOVE:abc} into a
+move on cell 0.
+
+\begin{lstlisting}[float=tp, language=C, caption={Move validation (\texttt{main.c}, trimmed).}, label=lst:move]
+void handle_move(const char *p) {
+    if (game_state != STATE_IN_PROGRESS)
+        { send_str("NACK:NOGAME\n"); return; }
+    int neg = 0, nd = 0, idx = 0; char mark = 0;
+    if (*p == '-') { neg = 1; p++; }
+    while (*p >= '0' && *p <= '9') {
+        if (idx < 1000) idx = idx*10 + (*p - '0');
+        p++; nd++;
+    }
+    if (nd == 0) { send_str("NACK:BADCMD\n"); return; }
+    if (*p == ':') {
+        mark = p[1];
+        if ((mark != 'X' && mark != 'O') || p[2] != '\0')
+            { send_str("NACK:BADCMD\n"); return; }
+    } else if (*p != '\0')
+        { send_str("NACK:BADCMD\n"); return; }
+    if (neg || idx > 8)
+        { send_str("NACK:RANGE\n"); return; }
+    if (mark && mark != turn)
+        { send_str("NACK:NOTURN\n"); return; }
+    if (board[idx] != '.')
+        { send_str("NACK:OCCUPIED\n"); return; }
+    int r = apply_move(idx);  /* first write to the board */
+    if (r == MV_CONTINUE && ai_mode) r = ai_reply();
+    send_move_result(r);      /* WIN, DRAW or OK:BOARD */
+}
+\end{lstlisting}
+
+\subsection{A rejected request cannot change the game state}
+The game state is six variables: \texttt{board}, \texttt{turn},
+\texttt{game\_state}, \texttt{connected}, \texttt{ai\_mode} and the move history.
+The argument has five steps, and each step can be checked against \texttt{main.c}.
+\begin{enumerate}\setlength\itemsep{0pt}
+\item Only seven pieces of code write those variables: \texttt{game\_new()},
+  \texttt{apply\_move()}, \texttt{handle\_undo()}, and the \texttt{CONNECT},
+  \texttt{DISCONNECT}, \texttt{NEW} and \texttt{RESIGN} branches of
+  \texttt{process\_command}. Every other path calls only \texttt{send\_str}.
+\item \emph{Framing and checksum errors.} \texttt{process\_rx} calls
+  \texttt{process\_command} only for a complete frame with \texttt{frame\_err}
+  equal to zero and a checksum that is absent or correct. The oversize, garbage,
+  fault, timeout and \texttt{CHECKSUM} branches send one NACK and reset
+  \texttt{line\_len} and \texttt{frame\_err}, which belong to the framer, not to
+  the game.
+\item \emph{Unknown command or no session.} \texttt{process\_command} returns
+  with \texttt{NACK:BADCMD} or \texttt{NACK:NOCONN} before it reaches any
+  handler.
+\item \emph{Handlers.} \texttt{NEW} returns with \texttt{NACK:BADCMD} before it
+  sets \texttt{ai\_mode} or calls \texttt{game\_new()} when a game is running.
+  \texttt{STATE} and \texttt{HISTORY} only read. \texttt{RESIGN} returns with
+  \texttt{NACK:NOGAME} before it writes \texttt{game\_state}. \texttt{handle\_undo}
+  checks the game state and the history length before it removes anything.
+\item \emph{\texttt{MOVE}.} In Listing~\ref{lst:move} the call
+  \texttt{apply\_move(idx)} is the first write, and every NACK path returns
+  before it.
+\end{enumerate}
+Hence every path that ends in a NACK has written no game variable. This is an
+argument from reading the code, not a formal proof, and the tests below sample
+it. The button is not a request over the link: it is a local override that
+resets the game when a session is open, and is documented as such.
+\texttt{test\_occupied\_move\_rejected\_and\_board\_unchanged},
+\texttt{test\_malformed\_move\_does\_not\_touch\_state},
+\texttt{test\_new\_during\_game\_rejected\_state\_unchanged},
+\texttt{test\_out\_of\_turn\_rejected},
+\texttt{test\_wrong\_checksum\_rejected\_and\_nothing\_executed} and
+\texttt{test\_undo\_all\_the\_way\_back\_then\_nothing\_to\_undo} each send a bad
+request and then read \texttt{STATE} to compare the board. The oversize and
+garbage tests check that a bad frame does not run the command at its end.
+
+\subsection{The server alternates the turn and can check a named player}
+The variable \texttt{turn} starts as X and flips only after a legal move that
+neither wins nor draws. A plain \texttt{MOVE:<i>} is played by the side to move.
+A \texttt{MOVE:<i>:<m>} with the wrong mark gets \texttt{NACK:NOTURN} before the
+cell is examined, and \texttt{test\_out\_of\_turn\_rejected} checks that the board
+is unchanged. In AI mode the human is always X, so a mark \texttt{O} on a
+\texttt{MOVE} is also refused with \texttt{NACK:NOTURN}.
+
+\subsection{The AI cannot make an illegal move}
+\texttt{ai\_choose} considers only empty cells on a copy of the board, and
+\texttt{ai\_reply} checks \texttt{board[idx] == '.'} again before it calls
+\texttt{apply\_move}, the same function a human \texttt{MOVE} ends in. A legal AI
+move is therefore true by construction, not by testing alone. Two checks back it
+up. On a PC build of the same \texttt{main.c} we enumerated every possible human
+strategy against the AI: 521 games, the human won none, the AI won 368 and 153
+were draws \ph{re-run the host check (tools/hostsim) so these numbers are yours}.
+\texttt{test\_ai\_never\_makes\_an\_illegal\_move\_and\_never\_loses} plays 20
+seeded random games on the board and checks that each reply differs from the
+previous board by exactly the human's X and one new O.
+
+\subsection{Undo restores the board and the turn from the history}
+The server stores the cell of every move. \texttt{UNDO} clears the last cell (the
+last two in AI mode, so it is the human's turn again) and sets the turn from the
+parity of the history length, so the turn can never disagree with the board. It
+is refused after game over, because the result has already been sent, and with an
+empty history it returns \texttt{NACK:NOUNDO}. \texttt{test\_undo\_restores\_board\_and\_turn}
+and \texttt{test\_undo\_in\_ai\_mode\_removes\_both\_moves} check both modes.
+
+\subsection{Win is checked before draw, for the mover only}
+After placing a mark the server tests the eight lines (three rows, three columns,
+two diagonals) for the mover's mark only, because only that mark can have just
+completed a line. The win test runs before the draw test, so a ninth move that
+completes a line is a win and not a draw. Either result sets
+\texttt{GAME\_OVER}, after which \texttt{MOVE} returns \texttt{NACK:NOGAME}.
+\texttt{test\_scripted\_win\_x}, \texttt{test\_scripted\_win\_o} and
+\texttt{test\_scripted\_draw} cover these results. No test yet covers a win on the
+ninth move, \ph{so say so here or add that test and cite it}.
+
+\subsection{The client holds no rules}
+The GUI sends \texttt{MOVE:<i>} for any click, including a click on an occupied
+cell, and shows the server's reason. If the client also checked legality, two
+rule sets would have to stay identical, and they would disagree whenever the
+button started a game that the client did not see. Our own first GUI inferred
+the final mark after a \texttt{WIN} from the move count. We removed that guess,
+and the GUI now asks for \texttt{STATE}.

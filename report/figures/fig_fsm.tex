@@ -1,0 +1,32 @@
+\begin{tikzpicture}[font=\scriptsize,>=Stealth,
+  st/.style={draw,rounded corners=3pt,minimum width=2.6cm,minimum height=0.9cm,fill=blue!7,thick},
+  bx/.style={draw,minimum width=1.95cm,minimum height=1.0cm,text width=1.85cm,align=center,fill=gray!8},
+  nk/.style={draw,rounded corners=2pt,fill=red!9,font=\tiny\ttfamily,minimum width=1.7cm,minimum height=0.55cm,align=center},
+  ok/.style={draw,rounded corners=2pt,fill=green!10,font=\tiny\ttfamily,minimum width=1.7cm,minimum height=0.55cm,align=center},
+  ar/.style={->,line width=0.5pt}]
+  % ---- states
+  \node[st] (idle) at (1.6,0) {IDLE};
+  \node[st] (prog) at (9.1,0) {IN\_PROGRESS};
+  \node[st] (over) at (16.6,0) {GAME\_OVER};
+  \draw[ar] (idle.east) -- node[above,align=center]{\texttt{NEW}, \texttt{NEW:AI} (session open)\\ / \texttt{OK:BOARD}} (prog.west);
+  \draw[ar] (prog.east) -- node[above,align=center]{\texttt{MOVE} wins / \texttt{WIN:m}\\\texttt{MOVE} fills / \texttt{DRAW}\\\texttt{RESIGN} / \texttt{OK:GAMEOVER}} (over.west);
+  \draw[ar] (prog.70) to[out=70,in=110,looseness=8]
+     node[above,align=center]{legal \texttt{MOVE}, \texttt{UNDO} / \texttt{OK:BOARD}; \texttt{STATE} / \texttt{BOARD}; \texttt{HISTORY} / \texttt{HIST}\\any rejected request / \texttt{NACK} (state unchanged)} (prog.110);
+  \draw[ar] (over.south west) .. controls +(-2.2,-1.5) and +(2.2,-1.5) .. node[below,pos=0.5]{\texttt{NEW} / \texttt{OK:BOARD}} (prog.south east);
+  \draw[ar] (prog.south west) .. controls +(-2.2,-1.5) and +(2.2,-1.5) .. node[below,pos=0.5,align=center]{\texttt{DISCONNECT} (any state) / \texttt{OK}\\closes the session} (idle.south east);
+  \node[draw,dashed,align=center,fill=yellow!10] (btn) at (14.6,2.3) {Button SW0 (session open):\\\texttt{game\_new()} + unsolicited \texttt{OK:BOARD}};
+  \draw[ar,dashed] (btn.west) -- (prog.30);
+  % ---- validation chain
+  \node[font=\footnotesize\bfseries,anchor=west] at (0.2,-3.0) {\texttt{MOVE} validation branch (runs inside IN\_PROGRESS)};
+  \foreach \i/\t in {0/{state is\\IN\_PROGRESS?},1/{parse\\\texttt{MOVE:<i>} or\\\texttt{MOVE:<i>:<m>}},2/{index\\in 0 to 8?},3/{mark equals\\turn (if given)?},4/{cell\\empty?},5/{place mark;\\win? board full?},6/{swap turn;\\AI mode: AI\\moves too}} {
+    \node[bx] (b\i) at ({1.25+2.5*\i},-4.4) {\t};
+  }
+  \foreach \i/\j in {0/1,1/2,2/3,3/4,4/5,5/6} {\draw[ar] (b\i) -- (b\j);}
+  \foreach \i/\t in {0/NACK:NOGAME,1/NACK:BADCMD,2/NACK:RANGE,3/NACK:NOTURN,4/NACK:OCCUPIED} {
+    \draw[ar,red!60!black] (b\i.south) -- ++(0,-0.55) node[nk,anchor=north] {\t};
+  }
+  \draw[ar] (b5.south) -- ++(0,-0.55) node[ok,anchor=north,font=\tiny\ttfamily,text width=1.7cm] {WIN:m or DRAW};
+  \draw[ar] (b6.south) -- ++(0,-0.55) node[ok,anchor=north] {OK:BOARD};
+  \draw[thick,gray] (0.3,-3.55) -- node[above]{no state written on any exit} (11.4,-3.55);
+  \draw[thick,gray] (11.6,-3.55) -- node[above]{state written} (16.9,-3.55);
+\end{tikzpicture}

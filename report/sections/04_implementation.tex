@@ -1,0 +1,154 @@
+\section{Implementation}
+\label{sec:impl}
+
+\begin{guidance}[Implementation (15 marks)]
+Choose \textbf{3 to 5 short code excerpts} that were \textbf{not straightforward}
+to write, and explain each: what problem it solves, why you wrote it this way,
+and what would go wrong with the obvious alternative. Good candidates:
+receiving bytes in an interrupt and handing them to the main loop; the frame
+assembler with timeout and oversize handling; non-blocking button debounce;
+keeping the GUI responsive; separating unsolicited messages from replies.
+Keep each listing short (10--25 lines) and narrow enough for one column; trim
+comments and boilerplate, and say that you did. Do not paste whole files.
+\end{guidance}
+
+The listings in this report are trimmed: we removed comments, blank lines and
+unrelated declarations.
+
+\subsection{A register-level interrupt keeps up with 115200 baud}
+Listing~\ref{lst:isr} is the receive path. At 115200 baud a byte arrives every
+87\,$\mu$s. Our first version re-armed \texttt{HAL\_UART\_Receive\_IT} after every
+byte~\cite{um1785}. On the board it answered 6-character commands correctly,
+but frames of 20 and 103 characters were answered with \texttt{NACK:BADCMD}
+instead of \texttt{NACK:RANGE} and \texttt{NACK:TOOLONG}, which means the
+server had flagged a UART fault mid-frame. We did not capture the overrun flag
+directly, so overrun is our diagnosis from this evidence. The handler now reads
+the status register and the data register itself~\cite{rm0091}, which is a few
+dozen instructions long (we did not measure its run time). It clears the error flags, sets \texttt{rx\_fault}
+so that the framer rejects the damaged frame, and pushes the byte into a
+128-byte ring buffer. The interrupt only writes \texttt{rx\_head} and the main
+loop only writes \texttt{rx\_tail}, so no lock is needed. The first version
+also never enabled the USART1 interrupt in the NVIC, so no command arrived at
+all; \texttt{HAL\_UART\_MspInit} now calls \texttt{HAL\_NVIC\_EnableIRQ}.
+
+\begin{lstlisting}[float=tp, language=C, caption={Interrupt handler and ring buffer (\texttt{stm32f0xx\_it.c}, \texttt{main.c}).}, label=lst:isr]
+void USART1_IRQHandler(void) {
+    uint32_t isr = USART1->ISR;
+    if (isr & (USART_ISR_ORE | USART_ISR_FE |
+               USART_ISR_NE)) {
+        USART1->ICR = USART_ICR_ORECF | USART_ICR_FECF
+                    | USART_ICR_NCF;
+        rx_fault = 1;               /* frame is damaged */
+    }
+    if (isr & USART_ISR_RXNE)
+        uart_rx_push((uint8_t)USART1->RDR);
+}
+void uart_rx_push(uint8_t b) {
+    uint16_t next = (rx_head + 1) % RX_RING_SIZE;
+    if (next == rx_tail) rx_fault = 1;  /* ring full */
+    else { rx_ring[rx_head] = b; rx_head = next; }
+}
+\end{lstlisting}
+
+\subsection{The framer discards a bad line up to its terminator}
+Listing~\ref{lst:framer} turns the byte stream into frames. The obvious
+approach resets the buffer when a line is too long and carries on. Then the end
+of a 100-character line would be parsed as a new command, so a line ending in
+\texttt{NEW} would start a game. Instead the framer sets \texttt{frame\_err}
+and drops every byte until the next terminator, then sends exactly one NACK.
+A non-printable byte sets the same flag. A separate check in the main loop
+compares \texttt{HAL\_GetTick()} with the time of the last received byte and
+discards a half-received frame after 500~ms, so a lost terminator cannot glue
+two commands together.
+
+\begin{lstlisting}[float=tp, language=C, caption={Frame assembler (\texttt{main.c}).}, label=lst:framer]
+while (rx_tail != rx_head) {
+    char c = (char)rx_ring[rx_tail];
+    rx_tail = (rx_tail + 1) % RX_RING_SIZE;
+    last_rx_tick = HAL_GetTick();
+    if (c == '\n' || c == '\r') {
+        if (frame_err)
+            send_str(frame_err == FE_TOOLONG
+                ? "NACK:TOOLONG\n" : "NACK:BADCMD\n");
+        else if (line_len > 0) {
+            line_buf[line_len] = '\0';
+            process_command(line_buf);
+        }
+        line_len = 0; frame_err = FE_NONE;
+    } else if (frame_err) { /* drop until terminator */ }
+    else if ((unsigned char)c < 0x20 ||
+             (unsigned char)c > 0x7E)
+        frame_err = FE_GARBAGE;
+    else if (line_len < LINE_MAX_LEN)
+        line_buf[line_len++] = c;
+    else frame_err = FE_TOOLONG;
+}
+\end{lstlisting}
+
+\subsection{The GUI waits on the port in a thread and draws from a queue}
+Listing~\ref{lst:gui} shows how the client stays responsive (we split one line for width). A blocking
+\texttt{readline} in a Tk callback would freeze the window for up to the
+port timeout on every call. The worker thread is the only code that blocks on
+the port; it hands lines to the Tk thread through a thread-safe queue, and the
+Tk thread polls that queue every 50~ms and never blocks. The handshake uses
+the same timer mechanism, so the GUI keeps sending \texttt{CONNECT} while the
+board is still booting. Tkinter widgets are touched only from the Tk
+thread~\cite{tkinter}.
+
+\begin{lstlisting}[float=tp, language=Python, caption={Reader thread, queue polling and handshake (\texttt{gui\_client.py}).}, label=lst:gui]
+def _read_thread(self, ser):       # worker thread
+    while ser.is_open:
+        raw = ser.readline()
+        line = raw.decode(errors="replace").strip()
+        if line:
+            self.rx_queue.put(line)
+
+def _poll_queue(self):             # Tk thread
+    while not self.rx_queue.empty():
+        self._handle_line(self.rx_queue.get())
+    self.root.after(50, self._poll_queue)
+
+def _handshake(self):              # until OK
+    if not self.ser or self.connected: return
+    if self.handshake_tries >= 15:
+        self._close_port(); return
+    self.handshake_tries += 1
+    self._send("CONNECT")
+    self.root.after(600, self._handshake)
+\end{lstlisting}
+
+\subsection{The AI searches a copy of the board and moves through the human's write path}
+Listing~\ref{lst:ai} is the opponent's search: negamax with alpha-beta pruning,
+scoring a win as $10-\mathit{depth}$ so that the AI prefers the quickest win and
+the slowest loss. Two choices matter. First, the search places and removes marks
+on a local copy of the board, so the game board changes only in
+\texttt{apply\_move}, the single function that writes a mark; the human's
+\texttt{MOVE} and the AI's reply both call it after their own checks, and the AI
+re-checks that its chosen cell is empty first. A search that wrote to the real board
+could leave a half-explored position behind. Second, cells are tried centre,
+corners, then edges, which cuts the search: on a PC build of the same source the
+worst single decision, the first reply, takes 1\,260 calls to \texttt{negamax}
+(mean 35), against up to $8! = 40\,320$ move sequences without pruning. We have
+not timed the search on the board; it runs in the main loop while the receive
+interrupt keeps buffering bytes.
+
+\begin{lstlisting}[float=tp, language=C, caption={AI search (\texttt{main.c}, trimmed).}, label=lst:ai]
+int negamax(char *b, char me, char opp,
+            int depth, int alpha, int beta) {
+    int best = -100;
+    for (int k = 0; k < 9; k++) {
+        int i = ai_order[k], sc;   /* 4,0,2,6,8,1,3,5,7 */
+        if (b[i] != '.') continue;
+        b[i] = me;
+        if (line_win(b, me))    sc = 10 - depth;
+        else if (board_full(b)) sc = 0;
+        else sc = -negamax(b, opp, me, depth + 1,
+                           -beta, -alpha);
+        b[i] = '.';
+        if (sc > best)     best = sc;
+        if (best > alpha)  alpha = best;
+        if (alpha >= beta) break;
+    }
+    return best;
+}
+\end{lstlisting}

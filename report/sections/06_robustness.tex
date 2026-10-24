@@ -1,0 +1,68 @@
+\section{Protocol Robustness and Integrity}
+\label{sec:robust}
+
+\begin{guidance}[Protocol robustness and integrity (10 marks)]
+Show \textbf{framing}, \textbf{specific NACKs for malformed input}, and
+\textbf{graceful recovery} from partial or garbage data. A table that maps each
+kind of bad input to your mechanism, its response and the test that checks it
+works well. Also explain why the server can never block forever (bounded
+loops, timeouts, no blocking waits in the main loop). Give measured numbers
+where you have them, e.g. the timeout you observed.
+\end{guidance}
+
+The server refuses every bad frame with a specific NACK, discards it up to the
+next terminator or the 500~ms timeout, and answers the next valid command
+normally. Table~\ref{tab:threats} maps each kind of bad input to the mechanism
+and the test that exercises it.
+
+\begin{table}[t]
+\centering
+\caption{Bad input, the server's handling, and the test that checks it.}
+\label{tab:threats}
+\scriptsize
+\begin{tabular}{@{}L{1.55cm}L{3.0cm}L{3.45cm}@{}}
+\toprule
+Bad input & Handling and response & Test \\
+\midrule
+Partial frame & dropped after 500~ms of silence; \texttt{NACK:TIMEOUT} & \texttt{test\_partial\_frame\_times\_out\_and\_is\_discarded}; \texttt{test\_frame\_split\_across\_writes} (a split under 500~ms is reassembled) \\
+Oversized frame & discarded to terminator; one \texttt{NACK:TOOLONG} & \texttt{test\_oversized\_frame\_rejected\_and\_tail\_not\_executed} \\
+Garbage bytes & non-printable byte flags the frame; \texttt{NACK:BADCMD} & \texttt{test\_garbage\_bytes\_rejected\_then\_recovers} \\
+Wrong case or unknown command & exact match only; \texttt{NACK:BADCMD} & \texttt{test\_unknown\_and\_wrong\_case\_commands}; \texttt{test\_malformed\_move\_does\_not\_touch\_state}; \texttt{test\_malformed\_suffix\_is\_not\_a\_checksum} \\
+Corrupted bytes & CRC-8 suffix checked before parsing; \texttt{NACK:CHECKSUM}, nothing runs (frames that carry a suffix) & \texttt{test\_wrong\_checksum\_rejected\_and\_nothing\_executed}; \texttt{test\_corrupted\_payload\_is\_detected} \\
+UART errors & flags cleared in the interrupt; frame rejected with \texttt{NACK:BADCMD} & no dedicated test; first seen through the oversize test \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{A 500 ms timeout is far longer than any frame}
+A 64-byte frame takes about 5.6~ms on the wire (10 bits per byte at 115200
+baud), so a healthy sender never reaches 500~ms between bytes, and a stalled
+sender is cleared within about half a second. Our test checks only that the
+\texttt{NACK:TIMEOUT} arrives inside the 2~s read window of the harness; we did
+not measure the exact delay.
+
+\subsection{The checksum detects corruption the framer cannot see}
+Framing only checks the shape of a frame. A flipped bit that turns \texttt{MOVE:4}
+into \texttt{MOVE:5} still has the right shape, so the framer accepts it and the
+server would play the wrong cell. The CRC-8 suffix closes that gap for frames that
+carry it: \texttt{test\_corrupted\_payload\_is\_detected} sends exactly that
+substitution with the old checksum and checks that the board does not change. A CRC
+with a degree-8 polynomial detects every single-bit error and every burst of up to
+8 bits. The protection is optional: a plain frame has none, and damage to the
+\texttt{*} or the two digits makes a checksummed frame look plain, when it is
+usually (not provably) rejected as an unknown command.
+
+\subsection{The next terminator resynchronises the stream}
+A bad frame sets \texttt{frame\_err}, the framer drops the remaining bytes,
+and the first \texttt{\textbackslash n} or \texttt{\textbackslash r} clears the flag
+after one NACK. The tests send a bad frame and then a valid command, and
+check that the valid command gets its normal reply and that the bad frame's
+tail did not run (Listing~\ref{lst:framer}).
+
+\subsection{No path in the main loop waits without a bound}
+The framer loop ends when the ring is empty, which is at most 127 bytes. Transmit
+is polled with a 100~ms timeout per message. The main loop contains no
+\texttt{HAL\_Delay}: the button is debounced by comparing timestamps, and the only
+delays are the three LED flashes (600~ms) at start-up, before any request is
+accepted. We did not enable the independent watchdog, and
+\texttt{Error\_Handler} halts only if the HAL initialisation itself fails.

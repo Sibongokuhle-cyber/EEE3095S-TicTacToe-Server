@@ -1,0 +1,30 @@
+\begin{tikzpicture}[font=\scriptsize,>=Stealth,
+  pr/.style={draw,rounded corners=2pt,fill=gray!8,text width=3.3cm,align=center,minimum height=0.62cm},
+  rs/.style={draw,rounded corners=2pt,fill=blue!6,text width=2.6cm,align=center,minimum height=0.55cm},
+  er/.style={draw,rounded corners=2pt,fill=red!8,text width=2.6cm,align=center,minimum height=0.55cm},
+  ar/.style={->,line width=0.45pt}]
+  \node[pr] (a) at (2.1,0)     {Start: pick port, press Connect};
+  \node[pr] (b) at (2.1,-1.05) {Open port (DTR/RTS low); start reader thread};
+  \node[pr] (c) at (2.1,-2.1)  {Send \texttt{CONNECT} every 600~ms until \texttt{OK}};
+  \node[er] (cf) at (6.9,-2.1) {15 tries, no reply: close port, show status};
+  \node[pr] (d) at (2.1,-3.5)  {Idle: Tk main loop polls the reply queue every 50~ms};
+  \node[pr] (e) at (2.1,-4.75) {Click: send one request with checksum (1 in flight, 2~s timeout)};
+  \node[pr] (g) at (2.1,-6.0)  {Disconnect: send \texttt{DISCONNECT}, close port};
+  \node[rs] (r1) at (6.9,-3.0)  {\texttt{OK:BOARD}, \texttt{BOARD}: redraw from the reply};
+  \node[rs] (r2) at (6.9,-3.8)  {\texttt{WIN}, \texttt{DRAW}: show result, send \texttt{STATE}};
+  \node[er] (r3) at (6.9,-4.6)  {\texttt{NACK}: dialog with the reason; board unchanged};
+  \node[er] (r4) at (6.9,-5.4)  {bad checksum: ignore, send \texttt{STATE}; no reply in 2~s: status};
+  \draw[ar] (a) -- (b); \draw[ar] (b) -- (c);
+  \draw[ar] (c.east) -- node[above]{no} (cf.west);
+  \draw[ar] (c) -- node[right]{\texttt{OK}} (d);
+  \draw[ar] (d) -- (e); \draw[ar] (e) -- (g);
+  % one request, four possible outcomes
+  \draw (e.east) -- (4.45,-4.75) -- (4.45,-3.0);
+  \foreach \r/\y in {r1/-3.0,r2/-3.8,r3/-4.6,r4/-5.4} {
+    \draw[ar] (4.45,\y) -- (\r.west);
+  }
+  \draw (4.45,-5.4) -- (4.45,-4.75);
+  % every outcome returns to the idle loop
+  \draw[ar] (r4.south) -- (6.9,-6.45) -- (0.15,-6.45) -- (0.15,-3.5) -- (d.west);
+  \node[font=\tiny,anchor=north west] at (3.4,-6.5) {after every reply or timeout};
+\end{tikzpicture}

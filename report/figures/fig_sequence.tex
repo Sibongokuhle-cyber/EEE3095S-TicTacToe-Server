@@ -1,0 +1,22 @@
+\begin{tikzpicture}[font=\scriptsize,
+  msg/.style={-{Stealth[length=1.7mm]},line width=0.45pt},
+  rep/.style={-{Stealth[length=1.7mm]},line width=0.45pt,dashed},
+  lab/.style={above,pos=0.5,inner sep=0.5pt,font=\fontsize{6.3}{7}\selectfont}]
+  \node[draw,fill=gray!12,minimum width=1.5cm] (c) at (0.8,0) {Client};
+  \node[draw,fill=gray!12,minimum width=1.5cm] (s) at (7.9,0) {Server};
+  \draw[dotted] (0.8,-0.25) -- (0.8,-8.0);
+  \draw[dotted] (7.9,-0.25) -- (7.9,-8.0);
+  \foreach \y/\req/\rsp in {
+     1/{CONNECT}/{OK},
+     2/{NEW}/{OK:BOARD:.........},
+     3/{MOVE:0}/{OK:BOARD:X........},
+     4/{MOVE:0}/{NACK:OCCUPIED},
+     5/{MOVE:3, MOVE:1, MOVE:4}/{OK:BOARD (3 replies)},
+     6/{MOVE:2 (X completes a row)}/{WIN:X},
+     7/{STATE}/{BOARD:XXXOO....},
+     8/{100 x A, then NEW}/{NACK:TOOLONG},
+     9/{DISCONNECT}/{OK}} {
+    \draw[msg] (0.8,{-0.85*\y+0.1}) -- node[lab]{\texttt{\req}} (7.9,{-0.85*\y+0.1});
+    \draw[rep] (7.9,{-0.85*\y-0.34}) -- node[lab]{\texttt{\rsp}} (0.8,{-0.85*\y-0.34});
+  }
+\end{tikzpicture}

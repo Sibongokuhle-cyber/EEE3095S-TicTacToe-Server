@@ -1,0 +1,145 @@
+% ============================================================================
+%  EEE3095S CS Project 2026: Serial Game Server
+%  STUDENT REPORT TEMPLATE (IEEE conference format, max 10 pages incl. refs)
+% ============================================================================
+%
+%  How to use this template
+%  ------------------------
+%  * Red text in [square brackets] is PLACEHOLDER text. Replace every piece of
+%    it with your own words. Search the PDF for "[" before you submit.
+%  * Grey boxes are GUIDANCE. They tell you what the marker looks for. Leave
+%    them on while you write, then switch them off below (\guidancefalse) to
+%    check your length against the 10-page limit and before you submit.
+%  * Dashed boxes are PLACEHOLDER FIGURES. Replace each with your own diagram
+%    (\includegraphics{figures/yourfile.pdf} or TikZ).
+%  * Keep the section headings exactly as they are: they are the brief's
+%    required headings, in the brief's order, and the marking guide follows
+%    them. Add your own subsection headings underneath.
+%  * Build:  latexmk -pdf main.tex   (or upload the folder to Overleaf).
+% ============================================================================
+\documentclass[conference]{IEEEtran}
+
+\usepackage[T1]{fontenc}
+\usepackage{cite}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric}
+\usepackage[most]{tcolorbox}
+\usepackage[hidelinks]{hyperref}
+
+% ---------------------------------------------------------------- switches --
+\newif\ifguidance
+\guidancetrue        % <-- change to \guidancefalse to hide all guidance boxes
+
+% ------------------------------------------------------- template helpers --
+\definecolor{phred}{rgb}{0.75,0.08,0.08}
+\definecolor{guidebg}{gray}{0.94}
+\definecolor{guideframe}{gray}{0.55}
+
+% Placeholder text: replace with your own.
+\newcommand{\ph}[1]{\textcolor{phred}{[#1]}}
+
+% Guidance box: what the marker expects. Hidden when \guidancefalse.
+\newtcolorbox{guidebox}[1][]{
+  breakable, enhanced, colback=guidebg, colframe=guideframe,
+  boxrule=0.4pt, arc=1pt, left=3pt, right=3pt, top=2pt, bottom=2pt,
+  fontupper=\footnotesize\sffamily, title={#1},
+  fonttitle=\footnotesize\sffamily\bfseries, coltitle=black,
+  colbacktitle=guidebg!80!gray, before skip=4pt, after skip=6pt}
+\newenvironment{guidance}[1][Guidance]
+  {\ifguidance\begin{guidebox}[#1]\else\setbox0\vbox\bgroup\fi}
+  {\ifguidance\end{guidebox}\else\egroup\fi}
+
+% Placeholder figure: dashed box with a description of what to draw.
+% Usage: \figph{<height>}{<what the figure must show>}
+\newcommand{\figph}[2]{%
+  \begin{tikzpicture}
+    \draw[dashed, phred, line width=0.6pt] (0.3pt,0) rectangle (\linewidth-0.3pt,#1);
+    \node[text width=0.85\linewidth, align=center, text=phred, font=\footnotesize]
+      at (0.5\linewidth,0.5*#1) {#2};
+  \end{tikzpicture}}
+
+% allow line breaks after underscores (long test names in tables)
+\renewcommand{\_}{\textunderscore\penalty0\hskip0pt\relax}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\lstset{
+  basicstyle=\ttfamily\scriptsize, columns=fullflexible, keepspaces=true,
+  frame=tb, framerule=0.4pt, commentstyle=\color{gray}\itshape,
+  keywordstyle=\bfseries, showstringspaces=false, breaklines=true,
+  captionpos=b, float=tp, floatplacement=tp,
+}
+\renewcommand{\lstlistingname}{Listing}
+
+\begin{document}
+
+% ---------------------------------------------------------------- title ----
+\title{An Authoritative STM32F051 Tic-Tac-Toe Server\\with a Thin Python Client\\[2pt]
+\normalsize Line-framed ASCII protocol, server-side validation and an automated board test suite}
+
+\author{
+\IEEEauthorblockN{Sibongokuhle Sibiya (\ph{student number})\quad
+                  \ph{Student B full name} (\ph{student number})}
+\IEEEauthorblockA{EEE3095S CS Project 2026, Department of Electrical Engineering\\
+University of Cape Town}
+}
+
+\maketitle
+
+\begin{abstract}
+We built a two-player Tic-Tac-Toe server on an STM32F051 board that acts as the
+only referee, and a Python/Tkinter client that forwards clicks and draws what
+the server confirms. The two sides talk over the board's ST-Link virtual COM
+port (USART1, 115200~baud, 8N1) using newline-terminated ASCII frames of at
+most 63 characters. The server checks every request in a fixed order before it
+writes any state, so a rejected request leaves the game unchanged. It answers
+malformed, oversized, non-printable and incomplete frames with specific
+\texttt{NACK} codes. We added three optional extensions: a CRC-8 frame
+checksum, an AI opponent that moves through the same function as a human, and
+move history with undo. A pytest harness drives the real board without human
+input: 23 core tests and 24 extension tests. On the first run on the board,
+21 of the 23 core tests passed (the extension tests did not exist yet). The two
+failures exposed UART overruns in the HAL receive path, which we replaced with
+a register-level interrupt handler. \ph{Final result: N of 47 tests pass on the
+board after the fix; add the number once you have re-run the suite.}
+\end{abstract}
+
+\begin{guidance}[Before you start writing]
+\begin{itemize}\setlength\itemsep{0pt}
+\item \textbf{Marks} (brief, p.~6): Introduction 10, Protocol 15, Specification
+  and design 15, Implementation 15, Game logic and server authority 15,
+  Robustness 10, Validation 15, Conclusion 5. Video and Code links are required.
+\item \textbf{Limit:} 10 pages \emph{including} references. Switch guidance off
+  (\texttt{\textbackslash guidancefalse} in \texttt{main.tex}) to see your true length.
+\item \textbf{Write headings that state a finding}, not just a topic, e.g.
+  ``Validation runs before any state change'' rather than ``Validation''.
+  Keep the section headings below as they are.
+\item \textbf{Be specific}: name your mechanisms and give numbers
+  (``rejects frames longer than 32 bytes''), not adjectives (``robust'',
+  ``efficient'', ``significant'').
+\item \textbf{Every figure, table and listing must be referred to and explained
+  in the text.} Say what the reader should notice.
+\item \textbf{Never present a result you did not measure.} If something is still
+  untested on the board, say so.
+\end{itemize}
+\end{guidance}
+
+\input{sections/01_introduction}
+\input{sections/02_protocol}
+\input{sections/03_design}
+\input{sections/04_implementation}
+\input{sections/05_authority}
+\input{sections/06_robustness}
+\input{sections/07_validation}
+\input{sections/08_conclusion}
+\input{sections/09_video_code}
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}

@@ -1,0 +1,49 @@
+\section{Introduction}
+\label{sec:intro}
+
+\begin{guidance}[Introduction (10 marks), about half a page]
+The marker wants: the context and goal of the project; your \textbf{selected
+game} and \textbf{GUI library}, with the reason for each choice; your main
+\textbf{design choices}; the \textbf{task allocation} between the two of you; and
+the \textbf{structure} of the report. Keep it to about half a page (brief,
+p.~6). Open with the problem, not with the technology. Expand every acronym at
+first use, e.g.\ ``finite-state machine (FSM)''.
+\end{guidance}
+
+A serial game has two programs that can disagree about the state of the game.
+If the PC is trusted, a faulty or hostile client can place two marks in one
+turn, overwrite an occupied cell or keep playing after the game has ended, and
+the board and the screen then show different games. The project brief~\cite{brief}
+therefore makes the STM32 the referee. Our design guarantees one property: a
+request that the server rejects never changes the game state.
+
+We chose Tic-Tac-Toe, the baseline game in the brief, so that our effort went
+into the protocol, the robustness of the server and the automated tests rather
+than into game rules. % CONFIRM: reword if you had a different reason.
+The client uses Tkinter~\cite{tkinter} because it ships with the standard
+Python installer and needs no extra installation, and pySerial~\cite{pyserial}
+for the serial port. % CONFIRM: reword if you had a different reason.
+
+Beyond the compulsory system we built three of the optional extensions that
+the brief lists or recommends: a CRC-8 checksum on every frame, an AI opponent,
+and move history with undo. Each one sits behind new commands, so the compulsory
+protocol behaves exactly as before and the 23 core tests still apply.
+
+Three design choices shape the system. First, the firmware splits reception in
+two: a short interrupt handler stores each byte in a ring buffer, and the main
+loop assembles lines, parses them and runs the state machine. Second, the
+protocol is line-framed ASCII with no spaces, so a person can test the server
+from a serial terminal. Third, one pytest harness drives the real board
+without human interaction, and every robustness rule has a named test.
+
+\textbf{Task allocation.} \ph{Who did what. Name each student and their areas
+(for example: firmware and protocol; GUI and test harness) and what you did
+together (protocol specification, integration, report).}
+
+\textbf{Structure.} Section~\ref{sec:protocol} defines the requirements, the
+message protocol and the extensions. Section~\ref{sec:design} presents the server FSM, the GUI
+flowchart and the circuit. Section~\ref{sec:impl} explains five code excerpts.
+Section~\ref{sec:authority} argues that the server stays authoritative.
+Section~\ref{sec:robust} covers framing and recovery from bad input.
+Section~\ref{sec:valid} reports the tests on the board, and
+Section~\ref{sec:conclusion} concludes.

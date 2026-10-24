@@ -1,0 +1,107 @@
+\section{Specification and Design}
+\label{sec:design}
+
+\begin{guidance}[Specification and design (15 marks)]
+Required (brief, A.3--A.5): an \textbf{embedded server FSM} covering IDLE,
+IN\_PROGRESS, GAME\_OVER \textbf{and the move-validation branch}; a
+\textbf{flowchart of the GUI application}; and a \textbf{circuit diagram} of the
+STM-to-PC UART connection, with the on-board button and LED behaviour labelled.
+Diagrams may be at function level. Explain \textbf{why} responsibilities sit on
+the server or the client. Draw diagrams in a tool that exports vector PDF
+(draw.io, TikZ, Mermaid) and check that every label is readable when printed.
+\end{guidance}
+
+\subsection{The server decides; the client only draws}
+Table~\ref{tab:owner} assigns each decision to one side. The server holds the
+only copy of the game state (the board, the side to move and the game status)
+and the client never computes any of it. The firmware has two layers. Hardware
+code covers the USART interrupt, polled transmit, the LED and the button.
+Rule code covers \texttt{check\_win}, \texttt{check\_draw},
+\texttt{handle\_move} and the command dispatcher, which depend only on the
+game variables and on \texttt{send\_str}. We kept the rules apart from the
+interrupt and LED code so that they never depend on timing.
+
+\begin{table}[t]
+\centering
+\caption{Who owns each decision.}
+\label{tab:owner}
+\footnotesize
+\begin{tabular}{@{}L{3.5cm}L{1.3cm}L{3.0cm}@{}}
+\toprule
+Decision & Owner & Why \\
+\midrule
+Board, turn, game status & server & one source of truth \\
+Is a move legal? & server & a client cannot be trusted \\
+Win and draw detection & server & result must match the LED \\
+Session (\texttt{CONNECT}) & server & rejects commands before it \\
+What is drawn & client & only from \texttt{OK:BOARD}, \texttt{BOARD} \\
+AI move choice & server & same write path as a human \\
+Move history, undo & server & client keeps no move list \\
+LED and button & server & board-side indicators \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Three states and a validation chain that writes last}
+Figure~\ref{fig:fsm} shows the server FSM. In IDLE the server accepts
+\texttt{NEW} (or \texttt{NEW:AI}) once a session is open. In IN\_PROGRESS it accepts
+\texttt{MOVE}, \texttt{STATE}, \texttt{HISTORY}, \texttt{UNDO} and \texttt{RESIGN}; a legal
+move stays in IN\_PROGRESS unless it wins or fills the board. In GAME\_OVER it accepts
+\texttt{NEW}, \texttt{STATE} and \texttt{HISTORY}, and a \texttt{MOVE} or \texttt{UNDO} gets
+\texttt{NACK:NOGAME}. \texttt{DISCONNECT} returns any
+state to IDLE. The lower part of the figure expands the validation branch. The
+five checks come before the first write to the board, so every
+\texttt{NACK} exit leaves the state unchanged. The figure omits the
+\texttt{NOCONN}, \texttt{TOOLONG}, \texttt{TIMEOUT} and \texttt{CHECKSUM} replies, which belong
+to the framer and the session check and never reach the state machine.
+
+\begin{figure*}[t]
+\centering
+\input{figures/fig_fsm}
+\caption{Server FSM with the move-validation branch. Red exits are NACKs
+that leave the state unchanged; green exits are successes. The symbol
+\texttt{m} stands for the mark of the side to move.}
+\label{fig:fsm}
+\end{figure*}
+
+\subsection{The GUI never blocks and never guesses}
+Figure~\ref{fig:gui} shows the client flow. A reader thread blocks on the port and
+puts each line into a queue; the Tk main loop empties the queue every 50~ms, so the
+window stays responsive. After the port opens, the client resends
+\texttt{CONNECT} every 600~ms, up to 15 times, so it works whether or not
+opening the port reset the board. It keeps one request in flight and ignores
+board clicks until the reply arrives or 2~s pass. It redraws the board only from
+\texttt{OK:BOARD} or \texttt{BOARD}. After \texttt{WIN} or \texttt{DRAW} it
+sends \texttt{STATE} and redraws from the answer. Every request carries a checksum;
+the client ignores a reply with a wrong one and asks for \texttt{STATE} instead of
+acting on it. A tick box chooses \texttt{NEW:AI}, and the Undo and History buttons send
+one request each and show the server's answer, because the client keeps no move list. If the cable is unplugged,
+the reader thread ends and the next request times out with ``No reply from
+board''; a failed write sets the status line to the error.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig_gui}
+\caption{GUI application flowchart. Every board change comes from a reply
+line, never from the click itself.}
+\label{fig:gui}
+\end{figure}
+
+\subsection{One USB cable carries power, programming and the serial link}
+Figure~\ref{fig:circuit} shows the circuit. USART1 TX (PA9) and RX (PA10)
+connect to the ST-Link's virtual COM port on the board, so no extra wiring or
+USB-UART converter is used, and the two share ground through the board. The
+dual-colour LED D9 sits on PB10 (red) and PB11 (green) behind 150\,$\Omega$
+resistors and lights when the pin is high. Red means X to move, green means O
+to move, both blinking means game over, and both off means IDLE. Button SW0 on
+PA0 reads low when pressed (the firmware enables the internal pull-up) and
+starts a new game if a session is open. On our board the red and green dies
+are physically swapped, so one constant (\texttt{BOARD\_RG\_SWAPPED}) swaps the
+two pins in software.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig_circuit}
+\caption{Circuit: UART link to the PC, the LED and the button.}
+\label{fig:circuit}
+\end{figure}
