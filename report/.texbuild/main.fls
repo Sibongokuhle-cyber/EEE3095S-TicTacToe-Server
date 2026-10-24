@@ -474,6 +474,7 @@ INPUT .\sections\01_introduction.tex
 INPUT .\sections\01_introduction.tex
 INPUT sections\01_introduction.tex
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmrc8t.tfm
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmrc8t.tfm
 INPUT .\sections\02_protocol.tex
 INPUT .\sections\02_protocol.tex
 INPUT .\sections\02_protocol.tex
@@ -503,13 +504,25 @@ INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrr8r.tfm
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmrc8t.vf
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmr8r.tfm
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmr8t.vf
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmrc8t.vf
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmr8r.tfm
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmb8t.vf
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmb8r.tfm
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmrc8t.tfm
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrr8t.tfm
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\public\amsfonts\cmextra\cmex7.tfm
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrr8t.tfm
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrb8t.tfm
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmri8t.vf
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmri8r.tfm
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\courier\pcrr8t.vf
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrr8r.tfm
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmr8t.vf
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmr8r.tfm
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\courier\pcrr8t.vf
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrr8r.tfm
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\courier\pcrb8t.vf
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrb8r.tfm
 INPUT .\figures\fig_sequence.tex
 INPUT .\figures\fig_sequence.tex
 INPUT .\figures\fig_sequence.tex
@@ -522,19 +535,6 @@ INPUT .\sections\03_design.tex
 INPUT .\sections\03_design.tex
 INPUT .\sections\03_design.tex
 INPUT sections\03_design.tex
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmr8t.vf
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmrc8t.vf
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmr8r.tfm
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmri8t.vf
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmri8r.tfm
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\courier\pcrr8t.vf
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrr8r.tfm
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmr8t.vf
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\times\ptmr8r.tfm
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\courier\pcrr8t.vf
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrr8r.tfm
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\courier\pcrb8t.vf
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrb8r.tfm
 INPUT .\figures\fig_fsm.tex
 INPUT .\figures\fig_fsm.tex
 INPUT .\figures\fig_fsm.tex
@@ -547,6 +547,8 @@ INPUT .\figures\fig_gui.tex
 INPUT .\figures\fig_gui.tex
 INPUT .\figures\fig_gui.tex
 INPUT figures\fig_gui.tex
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\courier\pcrr8t.vf
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrr8r.tfm
 INPUT .\figures\fig_circuit.tex
 INPUT .\figures\fig_circuit.tex
 INPUT .\figures\fig_circuit.tex
@@ -557,8 +559,6 @@ INPUT .\sections\04_implementation.tex
 INPUT .\sections\04_implementation.tex
 INPUT .\sections\04_implementation.tex
 INPUT sections\04_implementation.tex
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\courier\pcrr8t.vf
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrr8r.tfm
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\courier\pcrb8t.vf
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrb8r.tfm
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\times\ptmb8t.vf
@@ -581,15 +581,15 @@ INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\tex\latex\listi
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmti10.tfm
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmti7.tfm
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmti7.tfm
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\courier\pcrb8t.vf
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrb8r.tfm
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\courier\pcrro8t.vf
+INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrro8r.tfm
 INPUT .\sections\05_authority.tex
 INPUT .\sections\05_authority.tex
 INPUT .\sections\05_authority.tex
 INPUT .\sections\05_authority.tex
 INPUT sections\05_authority.tex
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\courier\pcrb8t.vf
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrb8r.tfm
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\courier\pcrro8t.vf
-INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrro8r.tfm
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrro8t.tfm
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\vf\adobe\courier\pcrro8t.vf
 INPUT C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\fonts\tfm\adobe\courier\pcrro8r.tfm
