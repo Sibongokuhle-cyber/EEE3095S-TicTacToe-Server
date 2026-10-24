@@ -1,0 +1,57 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-7.4.3, pluggy-1.6.0 -- C:\Users\Sibongokuhle Sibiya\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\Sibongokuhle Sibiya\OneDrive - University of Cape Town\EEE3095S\Project\TicTacToeServer\tests
+plugins: anyio-3.7.1, asyncio-0.21.1
+asyncio: mode=Mode.STRICT
+collecting ... collected 47 items
+
+test_extras.py::test_crc8_known_vector PASSED                            [  2%]
+test_extras.py::test_checksummed_request_gets_checksummed_reply PASSED   [  4%]
+test_extras.py::test_plain_request_still_gets_plain_reply PASSED         [  6%]
+test_extras.py::test_reply_mode_follows_each_request PASSED              [  8%]
+test_extras.py::test_checksummed_game_sequence PASSED                    [ 10%]
+test_extras.py::test_wrong_checksum_rejected_and_nothing_executed PASSED [ 12%]
+test_extras.py::test_corrupted_payload_is_detected PASSED                [ 14%]
+test_extras.py::test_malformed_suffix_is_not_a_checksum PASSED           [ 17%]
+test_extras.py::test_lowercase_hex_checksum_accepted PASSED              [ 19%]
+test_extras.py::test_ai_first_reply_has_exactly_one_x_and_one_o PASSED   [ 21%]
+test_extras.py::test_ai_blocks_a_win PASSED                              [ 23%]
+test_extras.py::test_ai_takes_a_win PASSED                               [ 25%]
+test_extras.py::test_ai_never_makes_an_illegal_move_and_never_loses PASSED [ 27%]
+test_extras.py::test_ai_mode_rejects_an_out_of_turn_mark PASSED          [ 29%]
+test_extras.py::test_new_ai_during_a_game_is_rejected PASSED             [ 31%]
+test_extras.py::test_plain_new_after_ai_game_is_two_player_again PASSED  [ 34%]
+test_extras.py::test_history_empty_then_lists_moves_in_order PASSED      [ 36%]
+test_extras.py::test_history_without_a_game_is_rejected PASSED           [ 38%]
+test_extras.py::test_history_still_available_after_game_over PASSED      [ 40%]
+test_extras.py::test_undo_restores_board_and_turn PASSED                 [ 42%]
+test_extras.py::test_undo_all_the_way_back_then_nothing_to_undo PASSED   [ 44%]
+test_extras.py::test_undo_without_a_game_or_after_game_over_is_rejected PASSED [ 46%]
+test_extras.py::test_undo_in_ai_mode_removes_both_moves PASSED           [ 48%]
+test_extras.py::test_undo_before_connect_is_rejected PASSED              [ 51%]
+test_protocol.py::test_connect_returns_ok PASSED                         [ 53%]
+test_protocol.py::test_new_returns_empty_board PASSED                    [ 55%]
+test_protocol.py::test_legal_move_changes_board_exactly PASSED           [ 57%]
+test_protocol.py::test_occupied_move_rejected_and_board_unchanged PASSED [ 59%]
+test_protocol.py::test_out_of_range_rejected PASSED                      [ 61%]
+test_protocol.py::test_move_after_game_over_rejected PASSED              [ 63%]
+test_protocol.py::test_scripted_win_x PASSED                             [ 65%]
+test_protocol.py::test_scripted_win_o PASSED                             [ 68%]
+test_protocol.py::test_scripted_draw PASSED                              [ 70%]
+test_protocol.py::test_new_after_game_over_starts_fresh PASSED           [ 72%]
+test_protocol.py::test_before_connect_commands_rejected PASSED           [ 74%]
+test_protocol.py::test_idle_has_no_game PASSED                           [ 76%]
+test_protocol.py::test_new_during_game_rejected_state_unchanged PASSED   [ 78%]
+test_protocol.py::test_out_of_turn_rejected PASSED                       [ 80%]
+test_protocol.py::test_resign PASSED                                     [ 82%]
+test_protocol.py::test_disconnect_ends_session PASSED                    [ 85%]
+test_protocol.py::test_unknown_and_wrong_case_commands PASSED            [ 87%]
+test_protocol.py::test_malformed_move_does_not_touch_state PASSED        [ 89%]
+test_protocol.py::test_crlf_terminator_gives_single_reply PASSED         [ 91%]
+test_protocol.py::test_frame_split_across_writes PASSED                  [ 93%]
+test_protocol.py::test_oversized_frame_rejected_and_tail_not_executed PASSED [ 95%]
+test_protocol.py::test_garbage_bytes_rejected_then_recovers PASSED       [ 97%]
+test_protocol.py::test_partial_frame_times_out_and_is_discarded PASSED   [100%]
+
+============================= 47 passed in 27.83s =============================
