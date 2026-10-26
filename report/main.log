@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.10.2)  26 OCT 2026 22:38
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.10.2)  27 OCT 2026 01:28
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -702,29 +702,20 @@ Underfull \hbox (badness 1661) in paragraph at lines 93--110
 \T1/ptm/b/n/9 STM32F051 board that acts as the only ref-eree, and a
  []
 
-LaTeX Font Info:    Trying to load font information for T1+phv on input line 112.
-(C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\t1phv.fd
-File: t1phv.fd 2020/03/25 scalable font definitions for T1/phv.
-)
-LaTeX Font Info:    Font shape `T1/phv/m/it' in size <8> not available
-(Font)              Font shape `T1/phv/m/sl' tried instead on input line 117.
- (sections/01_introduction.tex) (sections/02_protocol.tex [1{C:/Users/Sibongokuhle Sibiya/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc}
-
-
-]
+(sections/01_introduction.tex) (sections/02_protocol.tex
 Underfull \hbox (badness 2269) in paragraph at lines 41--51
 []\T1/ptm/m/n/10 Any frame may end in \T1/pcr/m/n/10 *HH\T1/ptm/m/n/10 , two hex dig-its of a
  []
 
+[1{C:/Users/Sibongokuhle Sibiya/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc}
 
+
+]
 Underfull \hbox (badness 2368) in paragraph at lines 120--133
 []\T1/ptm/b/n/10 Optional mark on \T1/pcr/b/n/10 MOVE\T1/ptm/b/n/10 . \T1/ptm/m/n/10 With one client play-ing
  []
 
-[2] (figures/fig_sequence.tex)) (sections/03_design.tex (figures/fig_fsm.tex) (figures/fig_gui.tex) [3] (figures/fig_circuit.tex)
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
-) (sections/04_implementation.tex [4] (C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
+(figures/fig_sequence.tex)) (sections/03_design.tex [2] (figures/fig_fsm.tex) (figures/fig_gui.tex) (figures/fig_circuit.tex)) (sections/04_implementation.tex (C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 ) (C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstmisc.sty
 File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
@@ -732,9 +723,12 @@ File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 34.
 LaTeX Font Info:    Font shape `T1/pcr/m/it' in size <7> not available
 (Font)              Font shape `T1/pcr/m/sl' tried instead on input line 41.
- (C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
+ [3]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [4] (C:\Users\Sibongokuhle Sibiya\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
-) [5]) (sections/05_authority.tex
+)) (sections/05_authority.tex
 Underfull \hbox (badness 10000) in paragraph at lines 67--70
 []\T1/ptm/m/it/10 Unknown com-mand or no ses-sion. \T1/pcr/m/n/10 process_
  []
@@ -744,6 +738,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 67--70
 \T1/pcr/m/n/10 command \T1/ptm/m/n/10 re-turns with \T1/pcr/m/n/10 NACK:BADCMD \T1/ptm/m/n/10 or
  []
 
+[5]
 LaTeX Font Info:    Font shape `T1/pcr/m/it' in size <10> not available
 (Font)              Font shape `T1/pcr/m/sl' tried instead on input line 75.
 
@@ -766,7 +761,50 @@ Underfull \hbox (badness 4634) in paragraph at lines 101--111
 \T1/pcr/m/n/10 makes_ an_ illegal_ move_ and_ never_ loses \T1/ptm/m/n/10 plays
  []
 
-[6]) (sections/06_robustness.tex) (sections/07_validation.tex [7]) (sections/08_conclusion.tex [8]) (sections/09_video_code.tex) (main.bbl
+) (sections/06_robustness.tex [6]) (sections/07_validation.tex
+Underfull \hbox (badness 1515) in paragraph at lines 5--15
+\T1/ptm/m/n/10 and leaves the board un-changed; an out-of-range move
+ []
+
+<figures/gui_screenshot.png, id=407, 1204.5pt x 456.70625pt>
+File: figures/gui_screenshot.png Graphic file (type png)
+<use figures/gui_screenshot.png>
+Package pdftex.def Info: figures/gui_screenshot.png  used on input line 97.
+(pdftex.def)             Requested size: 464.39685pt x 176.0868pt.
+[7]
+Underfull \vbox (badness 1490) has occurred while \output is active []
+
+) (sections/08_conclusion.tex [8 <./figures/gui_screenshot.png (PNG copy)>]) (sections/09_video_code.tex
+Underfull \hbox (badness 10000) in paragraph at lines 12--17
+[]\T1/ptm/m/n/10 The demon-stra-tion video is at []$https : / / youtu . be /
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 12--17
+\T1/ptm/m/n/10 ySupiEHHqxo$[], with a copy at []$https : / / vt . tiktok . com /
+ []
+
+
+Underfull \hbox (badness 2617) in paragraph at lines 12--17
+\T1/ptm/m/n/10 ZSg4Cq7YV/$[]. It shows the board and the PC screen
+ []
+
+)
+Underfull \hbox (badness 10000) in paragraph at lines 28--141
+[]\T1/ptm/m/n/10 The source code is at []$https : / / github . com /
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--141
+\T1/ptm/m/n/10 Sibongokuhle-[]cyber / EEE3095S-[]TicTacToe-[]Server$[]. The
+ []
+
+
+Underfull \hbox (badness 5274) in paragraph at lines 28--141
+\T1/ptm/m/n/10 repos-i-tory holds the STM32CubeIDE project (\T1/pcr/m/n/10 Core/\T1/ptm/m/n/10 ,
+ []
+
+(main.bbl
 Underfull \hbox (badness 2790) in paragraph at lines 25--27
 []\T1/ptm/m/n/8 Department of Elec-tri-cal En-gi-neer-ing, Uni-ver-sity of Cape Town,
  []
@@ -788,7 +826,9 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[9] (main.aux)
+[9
+
+] (main.aux)
  ***********
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-09-09>
@@ -797,17 +837,17 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 6D30C7F2909C43C9AE65F1C4E1787A82;11245.
  ) 
 Here is how much of TeX's memory you used:
- 30303 strings out of 467392
- 625885 string characters out of 5398799
- 1655378 words of memory out of 5000000
- 58958 multiletter control sequences out of 15000+600000
- 761125 words of font info for 179 fonts, out of 8000000 for 9000
+ 30187 strings out of 467392
+ 624028 string characters out of 5398799
+ 1702289 words of memory out of 5000000
+ 58851 multiletter control sequences out of 15000+600000
+ 752489 words of font info for 173 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  92i,10n,96p,640b,1413s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr5.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy5.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy6.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/courier/ucrb8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/courier/ucrr8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/courier/ucrro8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/helvetic/uhvb8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/helvetic/uhvr8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/helvetic/uhvro8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmb8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmbi8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmri8a.pfb>
-Output written on main.pdf (9 pages, 328677 bytes).
+<C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr5.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy5.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy6.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/courier/ucrb8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/courier/ucrr8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/courier/ucrro8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmb8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmbi8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb><C:/Users/Sibongokuhle Sibiya/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmri8a.pfb>
+Output written on main.pdf (9 pages, 316855 bytes).
 PDF statistics:
- 541 PDF objects out of 1000 (max. 8388607)
+ 533 PDF objects out of 1000 (max. 8388607)
  180 named destinations out of 1000 (max. 500000)
- 477 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 482 words of extra memory for PDF output out of 10000 (max. 10000000)
 

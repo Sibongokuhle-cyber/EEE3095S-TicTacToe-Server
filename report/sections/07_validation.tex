@@ -92,16 +92,20 @@ All 47, \texttt{USE\_CRC=1} & 47 & the whole suite with a checksum on every requ
 \end{tabular}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\figph{5cm}{Screenshot of your GUI connected to the board, e.g. mid-game or
-just after a rejected move, with the message the user sees.}
-\caption{\ph{What the screenshot shows and what to notice in it.}}
+\includegraphics[width=0.9\textwidth]{figures/gui_screenshot.png}
+\caption{The GUI connected to the board on COM14 in the middle of a two-player
+game. X holds cells 0, 4 and 5 and O holds cells 3, 6 and 7, so X is to move.
+Connect, New Game and the AI tick box are greyed out because the session is open
+and the server refuses \texttt{NEW} during a live game; Resign, Undo and History
+are active.}
 \label{fig:screenshot}
-\end{figure}
+\end{figure*}
 
-\ph{Refer to Fig.~\ref{fig:screenshot} here: one sentence on what the reader
-should notice, e.g.\ the dialog for a rejected move.}
+Figure~\ref{fig:screenshot} shows the client in use. The status line reads ``Game
+in progress'', and the board shows only the state that the server last confirmed:
+the client has no way to draw a move that the server did not accept.
 
 \subsection{Code review found five bugs before the board did, and the board found one more}
 Reading the first firmware against the brief found five defects: the USART1
@@ -111,5 +115,4 @@ command; \texttt{NEW} was accepted in the middle of a game; and the hand-written
 boards in the first draw test were wrong, so that test would have failed on
 correct firmware. I fixed these before the first board run.
 The board then exposed the receive-path overrun described in
-Section~\ref{sec:impl}. \ph{Add any bug you hit while running the board or the GUI
-that is not listed here.}
+Section~\ref{sec:impl}.
