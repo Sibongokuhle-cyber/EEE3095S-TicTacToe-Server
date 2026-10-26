@@ -555,7 +555,7 @@ void handle_history(void) {
 
 /* ========================= command dispatcher ============================= *
  * IDLE        : CONNECT, NEW, NEW:AI
- * IN_PROGRESS : MOVE, STATE, HISTORY, UNDO, RESIGN
+ * IN_PROGRESS : MOVE, STATE, HISTORY, UNDO, RESIGNzz
  * GAME_OVER   : NEW, NEW:AI, STATE, HISTORY, DISCONNECT
  * Departures (documented): CONNECT is accepted in any state (idempotent), and
  * DISCONNECT is accepted in any state (aborts the game, returns to IDLE).
