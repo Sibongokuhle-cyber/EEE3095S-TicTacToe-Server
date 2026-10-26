@@ -1,0 +1,21 @@
+This is LuaTeX, Version 1.25.7 (MiKTeX 26.5) (format=dvilualatex 2026.10.2)  27 OCT 2026 01:34
+ restricted system commands enabled.
+**c:/Users/Sibongokuhle Sibiya\OneDrive - University of Cape Town\EEE3095S\Proj
+ect\TicTacToeServer\report\sections\01_introduction.tex
+
+! Emergency stop.
+<*> c:/Users/Sibongokuhle 
+                          Sibiya\OneDrive - University of Cape Town\EEE3095S...
+
+Here is how much of LuaTeX's memory you used:
+ 5 strings out of 475599
+ 100000,662416 words of node,token memory allocated
+ 270 words of node memory still in use:
+   1 hlist, 39 glue_spec nodes
+   avail lists: 2:12,3:3,4:1,5:1
+ 23029 multiletter control sequences out of 65536+600000
+ 14 fonts using 591679 bytes
+ 0i,0n,0p,0b,6s stack positions out of 10000i,1000n,20000p,200000b,200000s
+!  ==> Fatal error occurred, bad output DVI file produced!
+No pages of output.
+
